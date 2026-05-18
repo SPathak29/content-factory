@@ -170,7 +170,7 @@ def add_log(agent: str, msg: str):
 
 
 def call_claude(messages: list, use_search: bool = False) -> str:
-    key = st.session_state.get("anthropic_key", "")
+    key = st.session_state.get("anthropic_key", "") or st.secrets.get("ANTHROPIC_API_KEY", "")
     if not key:
         raise ValueError("Anthropic API key missing — add it in Setup.")
     client = anthropic.Anthropic(api_key=key)
