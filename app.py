@@ -568,6 +568,7 @@ with st.sidebar:
         ("📊  Revenue Dashboard",     "revenue"),
         ("🔗  Affiliate Registry",    "affiliates"),
         ("📈  Analytics & Feedback",  "analytics"),
+        ("📦  Product Creator",       "product"),
     ]
     for label, pid in nav_items:
         if st.button(label, key=f"nav_{pid}",
@@ -1694,3 +1695,340 @@ PERFORMANCE FEEDBACK FROM PREVIOUS BATCHES:
 # We extend it here after the function is defined.
 
 PAGE_MAP["analytics"] = page_analytics
+# ──────────────────────────────────────────────────────────────────────────────
+# AGENT 6 — PRODUCT CREATOR
+# ──────────────────────────────────────────────────────────────────────────────
+
+def agent_product_creator() -> dict:
+    """Creates the full £17 digital product content automatically."""
+    product  = st.session_state.get("product", "The AI Content Creator Starter Kit")
+    niche    = st.session_state.get("niche", "AI tools and side income")
+    price    = st.session_state.get("product_price", 17)
+    scripts  = st.session_state.get("scripts", [])
+
+    top_hooks = [s.get("script","")[:120] for s in scripts if s.get("status")=="approved"][:3]
+    hook_examples = "\n".join(top_hooks) if top_hooks else ""
+
+    add_log("productCreator", f"Writing full product: '{product}' at £{price}")
+    add_log("productCreator", "Generating Section 1: Top AI tools curated list...")
+
+    raw = call_claude([{"role": "user", "content": f"""
+You are a professional digital product creator specialising in online business education.
+
+Create the COMPLETE content for a £{price} digital guide called '{product}'.
+Target audience: complete beginners who want to build side income using AI tools and digital products.
+Niche context: {niche}
+
+Write ALL FIVE sections in full. Every section must be detailed, accurate, and genuinely useful.
+Do NOT use placeholder text. Write the actual content a buyer would receive.
+
+Recent viral hooks from our content (for tone reference):
+{hook_examples}
+
+Return ONLY valid JSON (no markdown):
+{{
+  "title": "{product}",
+  "subtitle": "Your complete beginner guide to building side income with AI tools",
+  "price": {price},
+  "section1": {{
+    "heading": "The 10 Best Free and Low-Cost AI Tools for Content Creators",
+    "intro": "2-3 sentence intro",
+    "tools": [
+      {{"name": "", "url": "", "cost": "Free/£X/mo", "bestFor": "", "howToUse": "2-3 sentence practical guide", "affiliateNote": ""}}
+    ]
+  }},
+  "section2": {{
+    "heading": "Your Exact 3-Videos-Per-Day Workflow",
+    "intro": "2-3 sentence intro",
+    "steps": [
+      {{"step": 1, "title": "", "detail": "3-4 sentences of practical instruction", "timeRequired": "", "toolNeeded": ""}}
+    ]
+  }},
+  "section3": {{
+    "heading": "The 4-Tier Revenue System Explained",
+    "intro": "2-3 sentence intro",
+    "tiers": [
+      {{"tier": 1, "name": "", "howItWorks": "3-4 sentences", "expectedMonthly": "", "timeToFirstIncome": ""}}
+    ]
+  }},
+  "section4": {{
+    "heading": "30 Viral Hook Templates That Stop Scrolling",
+    "intro": "2-3 sentence intro",
+    "hooks": ["hook1", "hook2"]
+  }},
+  "section5": {{
+    "heading": "Your 30-Day Action Plan",
+    "intro": "2-3 sentence intro",
+    "days": [
+      {{"day": "Day 1", "tasks": ["task1", "task2"], "goal": ""}}
+    ]
+  }},
+  "gumroadTitle": "short compelling title for Gumroad listing",
+  "gumroadDescription": "full compelling Gumroad product description, 150-200 words",
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
+}}
+
+Requirements:
+- Section 1: Include exactly 8 real AI tools with real URLs
+- Section 2: Include exactly 6 workflow steps
+- Section 3: Cover all 4 revenue tiers in detail
+- Section 4: Include exactly 30 hook templates
+- Section 5: Cover all 30 days with daily tasks
+"""}])
+
+    product_data = extract_json(raw)
+    if product_data:
+        add_log("productCreator", f"Product content generated — {len(str(product_data))} characters")
+        add_log("productCreator", f"Section 4: {len(product_data.get('section4',{}).get('hooks',[]))} hooks written")
+        add_log("productCreator", f"Section 5: {len(product_data.get('section5',{}).get('days',[]))} days planned")
+    return product_data or {}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# AGENT 7 — PRODUCT QA
+# ──────────────────────────────────────────────────────────────────────────────
+
+def agent_product_qa(product_data: dict) -> dict:
+    """Verifies product quality, accuracy, and completeness before Gumroad upload."""
+    add_log("productQA", "Starting full product verification...")
+    add_log("productQA", "Checking all 5 sections for completeness and accuracy...")
+
+    raw = call_claude([{"role": "user", "content": f"""
+You are a strict digital product quality auditor. Review this product content thoroughly.
+
+PRODUCT DATA:
+{json.dumps(product_data, indent=2)[:4000]}
+
+Check every section against these criteria:
+
+COMPLETENESS:
+- Section 1: Has at least 6 tools with real URLs?
+- Section 2: Has at least 5 workflow steps with real detail?
+- Section 3: Covers all 4 revenue tiers?
+- Section 4: Has at least 20 hook templates?
+- Section 5: Has at least 14 days planned?
+
+ACCURACY:
+- Are all tool names and URLs real and verifiable?
+- Are income claims framed as examples not guarantees?
+- Is advice actionable and specific, not vague?
+- Is any content plagiarised or generic filler?
+
+QUALITY:
+- Would a beginner find this genuinely useful?
+- Is the writing clear and engaging throughout?
+- Does it justify the £{st.session_state.get('product_price', 17)} price point?
+- Does it deliver more value than expected?
+
+Return ONLY valid JSON:
+{{
+  "overallScore": 0,
+  "completenessScore": 0,
+  "accuracyScore": 0,
+  "qualityScore": 0,
+  "passesQA": false,
+  "strengths": ["s1", "s2", "s3"],
+  "issues": ["i1", "i2"],
+  "criticalIssues": ["any issues that MUST be fixed before upload"],
+  "recommendation": "APPROVE / REVISE / REJECT",
+  "improvementInstructions": "specific fixes needed if not approving"
+}}
+
+Score 1-10 for each. passesQA = true only if overallScore >= 8 AND criticalIssues is empty.
+"""}])
+
+    qa = extract_json(raw) or {
+        "overallScore": 5, "completenessScore": 5, "accuracyScore": 5,
+        "qualityScore": 5, "passesQA": False,
+        "strengths": [], "issues": ["QA parsing failed — manual review needed"],
+        "criticalIssues": ["Unable to verify automatically"],
+        "recommendation": "REVISE",
+        "improvementInstructions": "Please review manually"
+    }
+
+    score = qa.get("overallScore", 0)
+    passed = qa.get("passesQA", False)
+    add_log("productQA", f"Overall score: {score}/10 — Completeness:{qa.get('completenessScore')} Accuracy:{qa.get('accuracyScore')} Quality:{qa.get('qualityScore')}")
+    add_log("productQA", f"Recommendation: {qa.get('recommendation')} — {'PASSES QA ✓' if passed else 'NEEDS REVISION'}")
+    if qa.get("criticalIssues"):
+        for issue in qa["criticalIssues"]:
+            add_log("productQA", f"  ⚠️ Critical: {issue}")
+    return qa
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PRODUCT CREATOR PAGE
+# ──────────────────────────────────────────────────────────────────────────────
+
+def page_product():
+    st.title("📦 Product Creator")
+    st.caption("Agent 6 writes your complete digital product. Agent 7 verifies it before anything goes live.")
+
+    if "product_data"   not in st.session_state: st.session_state.product_data   = {}
+    if "product_qa"     not in st.session_state: st.session_state.product_qa     = {}
+    if "product_ready"  not in st.session_state: st.session_state.product_ready  = False
+
+    product = st.session_state.get("product", "The AI Content Creator Starter Kit")
+    price   = st.session_state.get("product_price", 17)
+
+    st.info(f"Product to create: **{product}** — priced at **£{price}**", icon="📦")
+
+    if not st.session_state.product_data:
+        c1, c2 = st.columns(2)
+        with c1:
+            st.metric("Sections", "5 complete sections")
+        with c2:
+            st.metric("Estimated pages", "20–30 pages")
+
+        if st.button("🤖 Generate Full Product with Agent 6", type="primary", use_container_width=True):
+            with st.spinner("Agent 6 writing your complete product... (takes 2-3 minutes)"):
+                try:
+                    add_log("productCreator", "=== PRODUCT CREATION STARTED ===")
+                    product_data = agent_product_creator()
+                    if product_data:
+                        st.session_state.product_data  = product_data
+                        st.session_state.product_ready = False
+                        st.success("Product content generated. Running QA verification...")
+                        with st.spinner("Agent 7 verifying quality and accuracy..."):
+                            qa = agent_product_qa(product_data)
+                            st.session_state.product_qa    = qa
+                            st.session_state.product_ready = qa.get("passesQA", False)
+                        st.rerun()
+                    else:
+                        st.error("Generation failed — please try again.")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+    else:
+        pd_data = st.session_state.product_data
+        qa      = st.session_state.product_qa
+
+        # QA Results banner
+        passed = qa.get("passesQA", False)
+        score  = qa.get("overallScore", 0)
+
+        if passed:
+            st.success(f"✅ Product passed QA — Score: {score}/10 — Ready for Gumroad upload", icon="✅")
+        else:
+            st.warning(f"⚠️ Product needs revision — Score: {score}/10 — See issues below", icon="⚠️")
+
+        # QA Scores
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Overall",      f"{qa.get('overallScore',0)}/10")
+        c2.metric("Completeness", f"{qa.get('completenessScore',0)}/10")
+        c3.metric("Accuracy",     f"{qa.get('accuracyScore',0)}/10")
+        c4.metric("Quality",      f"{qa.get('qualityScore',0)}/10")
+
+        if qa.get("criticalIssues"):
+            st.error("Critical issues found:\n" + "\n".join(f"- {i}" for i in qa["criticalIssues"]))
+        if qa.get("issues"):
+            with st.expander("⚠️ All QA issues"):
+                for i in qa["issues"]: st.markdown(f"- {i}")
+        if qa.get("strengths"):
+            with st.expander("✅ Strengths"):
+                for s in qa["strengths"]: st.markdown(f"- {s}")
+
+        st.divider()
+
+        # Product preview
+        st.subheader(pd_data.get("title",""))
+        st.caption(pd_data.get("subtitle",""))
+
+        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            "🔧 AI Tools", "📹 Workflow", "💰 Revenue", "🎣 Hooks", "📅 30-Day Plan"
+        ])
+
+        with tab1:
+            s1 = pd_data.get("section1",{})
+            st.markdown(f"**{s1.get('heading','')}**")
+            st.markdown(s1.get("intro",""))
+            for tool in s1.get("tools",[]):
+                with st.expander(f"**{tool.get('name','')}** — {tool.get('cost','')}"):
+                    st.markdown(f"**Best for:** {tool.get('bestFor','')}")
+                    st.markdown(f"**How to use:** {tool.get('howToUse','')}")
+                    if tool.get("url"): st.markdown(f"**Link:** {tool.get('url','')}")
+
+        with tab2:
+            s2 = pd_data.get("section2",{})
+            st.markdown(f"**{s2.get('heading','')}**")
+            st.markdown(s2.get("intro",""))
+            for step in s2.get("steps",[]):
+                st.markdown(f"**Step {step.get('step','')} — {step.get('title','')}**")
+                st.markdown(step.get("detail",""))
+                st.caption(f"Time: {step.get('timeRequired','')} · Tool: {step.get('toolNeeded','')}")
+                st.divider()
+
+        with tab3:
+            s3 = pd_data.get("section3",{})
+            st.markdown(f"**{s3.get('heading','')}**")
+            for tier in s3.get("tiers",[]):
+                with st.expander(f"Tier {tier.get('tier','')} — {tier.get('name','')} → {tier.get('expectedMonthly','')}"):
+                    st.markdown(tier.get("howItWorks",""))
+                    st.caption(f"Time to first income: {tier.get('timeToFirstIncome','')}")
+
+        with tab4:
+            s4 = pd_data.get("section4",{})
+            st.markdown(f"**{s4.get('heading','')}**")
+            hooks = s4.get("hooks",[])
+            st.caption(f"{len(hooks)} hooks generated")
+            for j, hook in enumerate(hooks,1):
+                st.markdown(f"**{j}.** *\"{hook}\"*")
+
+        with tab5:
+            s5 = pd_data.get("section5",{})
+            st.markdown(f"**{s5.get('heading','')}**")
+            for day in s5.get("days",[]):
+                with st.expander(f"**{day.get('day','')}** — {day.get('goal','')}"):
+                    for task in day.get("tasks",[]): st.markdown(f"- {task}")
+
+        st.divider()
+
+        # Download + actions
+        product_text = f"""# {pd_data.get('title','')}
+## {pd_data.get('subtitle','')}
+Price: £{pd_data.get('price',17)}
+
+---
+
+## {pd_data.get('section1',{}).get('heading','')}
+{pd_data.get('section1',{}).get('intro','')}
+
+""" + "\n".join([f"### {t.get('name','')} ({t.get('cost','')})\nBest for: {t.get('bestFor','')}\nHow to use: {t.get('howToUse','')}\nURL: {t.get('url','')}" for t in pd_data.get('section1',{}).get('tools',[])]) + f"""
+
+---
+
+## {pd_data.get('section2',{}).get('heading','')}
+""" + "\n".join([f"Step {s.get('step','')} — {s.get('title','')}\n{s.get('detail','')}" for s in pd_data.get('section2',{}).get('steps',[])]) + f"""
+
+---
+
+## {pd_data.get('section4',{}).get('heading','')}
+""" + "\n".join([f"{j}. {h}" for j,h in enumerate(pd_data.get('section4',{}).get('hooks',[]),1)]) + f"""
+
+---
+
+## {pd_data.get('section5',{}).get('heading','')}
+""" + "\n".join([f"{d.get('day','')} — {d.get('goal','')}\n" + "\n".join([f"• {t}" for t in d.get('tasks',[])]) for d in pd_data.get('section5',{}).get('days',[])])
+
+        st.download_button(
+            "⬇️ Download Product as Text File",
+            product_text.encode("utf-8"),
+            file_name=f"{product.replace(' ','_')}.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
+
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("🔄 Regenerate Product", use_container_width=True):
+                st.session_state.product_data  = {}
+                st.session_state.product_qa    = {}
+                st.session_state.product_ready = False
+                st.rerun()
+        with c2:
+            if passed:
+                st.success("✅ Ready for Gumroad — Phase 2 coming next")
+            else:
+                st.warning("Fix QA issues before Gumroad upload")
+
+
+PAGE_MAP["product"] = page_product
