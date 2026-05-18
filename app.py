@@ -1411,7 +1411,6 @@ PAGE_MAP = {
     "affiliates": page_affiliates,
 }
 
-PAGE_MAP.get(st.session_state.page, page_setup)()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -2032,3 +2031,4 @@ Price: £{pd_data.get('price',17)}
 
 
 PAGE_MAP["product"] = page_product
+PAGE_MAP.get(st.session_state.page, page_setup)()
