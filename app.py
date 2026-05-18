@@ -2422,7 +2422,7 @@ CRITICAL: launchPrice should be optimal for FIRST SALES (not theoretical max). t
     add_log("priceOptimizer", f"Verdict: {result.get('currentPriceVerdict','')}")
 
     return result
-PAGE_MAP.get(st.session_state.page, page_setup)()
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # PROFESSIONAL PDF GENERATOR
@@ -2576,3 +2576,4 @@ def generate_product_pdf(product_data: dict) -> bytes:
     if isinstance(output, bytearray):
         return bytes(output)
     return output
+PAGE_MAP.get(st.session_state.page, page_setup)()
