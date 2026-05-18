@@ -1704,6 +1704,11 @@ def agent_product_creator() -> dict:
     niche   = st.session_state.get("niche", "AI tools and side income")
     price   = st.session_state.get("product_price", 17)
 
+    def _dict_or(data, list_key):
+        if isinstance(data, dict): return data
+        if isinstance(data, list) and list_key: return {list_key: data}
+        return {}
+
     add_log("productCreator", f"Writing full product: '{product}' at £{price}")
 
     # SECTION 1 — Tools
@@ -1712,7 +1717,7 @@ def agent_product_creator() -> dict:
 Return ONLY valid JSON (no markdown, no code fences):
 {{"heading":"The 8 Best AI Tools for Content Creators","intro":"2-3 sentence intro","tools":[{{"name":"","url":"","cost":"Free or £X/mo","bestFor":"","howToUse":"2-3 sentence guide","affiliateNote":""}}]}}
 Include exactly 8 real AI tools with real working URLs covering: scriptwriting, voice-over, video editing, image generation, design, scheduling, productivity, automation."""}])
-    s1 = extract_json(r1) or {}
+    s1 = _dict_or(extract_json(r1), "tools")
 
     # SECTION 2 — Workflow
     add_log("productCreator", "Section 2/6: Daily workflow...")
@@ -1720,7 +1725,7 @@ Include exactly 8 real AI tools with real working URLs covering: scriptwriting, 
 Return ONLY valid JSON:
 {{"heading":"Your Exact 3-Videos-Per-Day Workflow","intro":"2-3 sentences","steps":[{{"step":1,"title":"","detail":"3-4 sentences","timeRequired":"X min","toolNeeded":""}}]}}
 Include exactly 6 workflow steps to produce 3 videos per day."""}])
-    s2 = extract_json(r2) or {}
+    s2 = _dict_or(extract_json(r2), "steps")
 
     # SECTION 3 — Revenue
     add_log("productCreator", "Section 3/6: 4-tier revenue system...")
@@ -1728,7 +1733,7 @@ Include exactly 6 workflow steps to produce 3 videos per day."""}])
 Return ONLY valid JSON:
 {{"heading":"The 4-Tier Revenue System Explained","intro":"2-3 sentences","tiers":[{{"tier":1,"name":"","howItWorks":"3-4 sentences","expectedMonthly":"£X-Y","timeToFirstIncome":"X weeks"}}]}}
 Cover all 4 tiers: 1) Digital product sales, 2) Affiliate commissions, 3) Newsletter sponsorships, 4) TikTok Creator Rewards."""}])
-    s3 = extract_json(r3) or {}
+    s3 = _dict_or(extract_json(r3), "tiers")
 
     # SECTION 4 — Hooks
     add_log("productCreator", "Section 4/6: 30 viral hooks...")
@@ -1736,7 +1741,7 @@ Cover all 4 tiers: 1) Digital product sales, 2) Affiliate commissions, 3) Newsle
 Return ONLY valid JSON:
 {{"heading":"30 Viral Hook Templates That Stop Scrolling","intro":"2-3 sentences","hooks":["hook 1","hook 2"]}}
 Include exactly 30 viral hook opening lines for short-form videos about AI tools, side income, and productivity."""}])
-    s4 = extract_json(r4) or {}
+    s4 = _dict_or(extract_json(r4), "hooks")
 
     # SECTION 5 — 30-Day Plan
     add_log("productCreator", "Section 5/6: 30-day action plan...")
@@ -1744,14 +1749,14 @@ Include exactly 30 viral hook opening lines for short-form videos about AI tools
 Return ONLY valid JSON:
 {{"heading":"Your 30-Day Action Plan","intro":"2-3 sentences","days":[{{"day":"Day 1","tasks":["task 1","task 2"],"goal":""}}]}}
 Include all 30 days. You can group consecutive days where appropriate (e.g. 'Day 5-7') to keep response concise but every day must be covered."""}])
-    s5 = extract_json(r5) or {}
+    s5 = _dict_or(extract_json(r5), "days")
 
     # METADATA — Gumroad listing
     add_log("productCreator", "Section 6/6: Gumroad listing metadata...")
     r6 = call_claude([{"role":"user","content":f"""Create Gumroad metadata for '{product}' at £{price}.
 Return ONLY valid JSON:
 {{"title":"{product}","subtitle":"compelling subtitle","gumroadTitle":"short compelling title","gumroadDescription":"150-200 word compelling description","tags":["tag1","tag2","tag3","tag4","tag5"]}}"""}])
-    meta = extract_json(r6) or {}
+    meta = _dict_or(extract_json(r6), None)
 
     product_data = {
         "title":              meta.get("title", product),
