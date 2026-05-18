@@ -1727,20 +1727,42 @@ Return ONLY valid JSON:
 Include exactly 6 workflow steps to produce 3 videos per day."""}])
     s2 = _dict_or(extract_json(r2), "steps")
 
-    # SECTION 3 — Revenue
-    add_log("productCreator", "Section 3/6: 4-tier revenue system...")
+    # SECTION 3 — Revenue (compliance-aware, realistic for beginners)
+    add_log("productCreator", "Section 3/6: 4-tier revenue system (compliance-aware)...")
     r3 = call_claude([{"role":"user","content":f"""Generate Section 3 of a £{price} guide '{product}'.
 Return ONLY valid JSON:
-{{"heading":"The 4-Tier Revenue System Explained","intro":"2-3 sentences","tiers":[{{"tier":1,"name":"","howItWorks":"3-4 sentences","expectedMonthly":"£X-Y","timeToFirstIncome":"X weeks"}}]}}
-Cover all 4 tiers: 1) Digital product sales, 2) Affiliate commissions, 3) Newsletter sponsorships, 4) TikTok Creator Rewards."""}])
+{{"heading":"The 4-Tier Revenue System","intro":"2-3 sentences INCLUDING explicit disclaimer that results vary based on effort and consistency","disclaimer":"Full disclaimer paragraph - typical results require 6-12 months consistent work, individual results vary significantly","tiers":[{{"tier":1,"name":"","howItWorks":"3-4 sentences","expectedMonthly":"realistic beginner range","monthsToFullPotential":"X months","timeToFirstIncome":"X weeks","resultsDisclaimer":"Brief caveat about effort required"}}]}}
+
+CRITICAL COMPLIANCE REQUIREMENTS (TikTok, Meta, FTC, UK ASA):
+- ALL income ranges MUST be REALISTIC for a beginner with no audience
+- Tier 1 (digital products): £0-£100/mo months 1-3, grows to £100-£500/mo with consistency by month 6+
+- Tier 2 (affiliates): £0-£50/mo initially, scales with traffic
+- Tier 3 (newsletter sponsorships): requires 500+ engaged subscribers MINIMUM, realistic £50-£200/mo at 1k subs
+- Tier 4 (TikTok Creator Rewards): UK rates are £0.02-£0.04 per 1k views; need 10k followers + 100k+ views/30 days to qualify; realistic £20-£150/mo for most qualifying creators
+- EVERY tier must include resultsDisclaimer about consistency required
+- AVOID: "easy money", "anyone can", "guaranteed", "passive income with no work"
+- USE: "typical results depend on", "with consistent effort", "example range for committed creators"
+- Cover all 4 tiers: Digital products, Affiliate commissions, Newsletter sponsorships, TikTok Creator Rewards"""}])
     s3 = _dict_or(extract_json(r3), "tiers")
 
-    # SECTION 4 — Hooks
-    add_log("productCreator", "Section 4/6: 30 viral hooks...")
+    # SECTION 4 — Hooks (compliance-aware, platform-safe)
+    add_log("productCreator", "Section 4/6: 30 viral hooks (platform-safe)...")
     r4 = call_claude([{"role":"user","content":f"""Generate Section 4 of a £{price} guide '{product}'.
 Return ONLY valid JSON:
-{{"heading":"30 Viral Hook Templates That Stop Scrolling","intro":"2-3 sentences","hooks":["hook 1","hook 2"]}}
-Include exactly 30 viral hook opening lines for short-form videos about AI tools, side income, and productivity."""}])
+{{"heading":"30 Viral Hook Templates That Stop Scrolling","intro":"2-3 sentences with note that hooks should be adapted to your real experience","complianceNote":"Brief reminder that specific income claims must be your actual results not fabricated","hooks":["hook 1","hook 2"]}}
+
+CRITICAL: Generate 30 hooks that are PLATFORM-SAFE:
+- AVOID specific fabricated income claims like "I made £847 in 72 hours" (these get flagged)
+- AVOID "anyone can make $X" patterns
+- INSTEAD use: curiosity gaps, contrarian takes, specific tool mentions, transformation stories, common problems
+- EXAMPLES OF SAFE PATTERNS:
+  * "The AI tool that completely changed how I [specific task]"
+  * "I tried [tool] for 30 days and here's what actually happened"
+  * "Stop using [common thing] - this AI alternative is 10x faster"
+  * "The 3 AI workflows I use every morning before opening email"
+  * "Most people use ChatGPT wrong - here's the prompt structure that works"
+- Mix curiosity, contrarian opinions, specific tools, time-based experiments, and process reveals
+- 30 hooks total, diverse patterns, all platform-safe"""}])
     s4 = _dict_or(extract_json(r4), "hooks")
 
     # SECTION 5 — 30-Day Plan (split into 3 chunks of 10 days for reliability)
