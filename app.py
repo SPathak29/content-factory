@@ -2213,7 +2213,21 @@ Price: £{pd_data.get('price',17)}
             mime="text/plain",
             use_container_width=True,
         )
-
+        try:
+            pdf_bytes = generate_product_pdf(pd_data)
+            st.download_button(
+                "📕 Download as Professional PDF",
+                pdf_bytes,
+                file_name=f"{product.replace(' ','_')}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                type="primary",
+            )
+        except ImportError:
+            st.info("Add 'fpdf2>=2.7.0' to requirements.txt to enable PDF download")
+        except Exception as e:
+            st.warning(f"PDF error: {str(e)[:120]}")
+            
         c1, c2 = st.columns(2)
         with c1:
             if st.button("🔄 Regenerate Product", use_container_width=True):
@@ -2409,3 +2423,156 @@ CRITICAL: launchPrice should be optimal for FIRST SALES (not theoretical max). t
 
     return result
 PAGE_MAP.get(st.session_state.page, page_setup)()
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PROFESSIONAL PDF GENERATOR
+# ──────────────────────────────────────────────────────────────────────────────
+
+def generate_product_pdf(product_data: dict) -> bytes:
+    """Generate a professional PDF of the digital product."""
+    from fpdf import FPDF
+
+    def safe(text):
+        if text is None: return ""
+        text = str(text)
+        repl = {'—':'-','–':'-','"':'"','"':'"',''':"'",''':"'",'…':'...','•':'*','✓':'+','→':'->','✅':'','⚠️':'!','❌':'x','🚀':'','📦':'','💰':'','🎣':'','📅':'','🔧':'','📹':''}
+        for old, new in repl.items():
+            text = text.replace(old, new)
+        return text.encode('latin-1', errors='replace').decode('latin-1')
+
+    pdf = FPDF(format='A4')
+    pdf.set_auto_page_break(auto=True, margin=20)
+
+    title    = product_data.get('title', 'Digital Product')
+    subtitle = product_data.get('subtitle', '')
+    price    = product_data.get('price', 17)
+
+    # COVER
+    pdf.add_page()
+    pdf.set_y(70)
+    pdf.set_font('Helvetica', 'B', 30)
+    pdf.multi_cell(0, 14, safe(title), align='C')
+    pdf.ln(6)
+    pdf.set_font('Helvetica', '', 14)
+    pdf.set_text_color(80,80,80)
+    pdf.multi_cell(0, 8, safe(subtitle), align='C')
+    pdf.set_text_color(0,0,0)
+    pdf.ln(30)
+    pdf.set_font('Helvetica', 'B', 18)
+    pdf.cell(0, 10, safe(f'GBP {price}'), align='C', ln=True)
+    pdf.ln(30)
+    pdf.set_font('Helvetica', 'I', 9)
+    pdf.set_text_color(120,120,120)
+    pdf.multi_cell(0, 5, safe("Results vary based on effort and consistency. Income ranges shown are examples for committed creators, not guarantees of earnings."), align='C')
+    pdf.set_text_color(0,0,0)
+
+    def section_header(num, heading, intro):
+        pdf.add_page()
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.set_text_color(120,120,120)
+        pdf.cell(0, 6, f"SECTION {num}", ln=True)
+        pdf.set_text_color(0,0,0)
+        pdf.set_font('Helvetica', 'B', 22)
+        pdf.multi_cell(0, 11, safe(heading))
+        pdf.ln(3)
+        pdf.set_font('Helvetica', '', 11)
+        pdf.set_text_color(60,60,60)
+        pdf.multi_cell(0, 6, safe(intro))
+        pdf.set_text_color(0,0,0)
+        pdf.ln(6)
+
+    # SECTION 1 — Tools
+    s1 = product_data.get('section1', {})
+    section_header(1, s1.get('heading', 'AI Tools'), s1.get('intro', ''))
+    for i, tool in enumerate(s1.get('tools', []), 1):
+        pdf.set_fill_color(248,248,250)
+        pdf.set_font('Helvetica', 'B', 13)
+        pdf.cell(0, 8, safe(f"{i}. {tool.get('name', '')}"), ln=True, fill=True)
+        pdf.set_font('Helvetica', 'I', 10)
+        pdf.set_text_color(100,100,100)
+        pdf.cell(0, 5, safe(f"   {tool.get('cost', '')}"), ln=True, fill=True)
+        pdf.set_text_color(0,0,0)
+        pdf.ln(3)
+        for label, value in [("Best for:", tool.get('bestFor', '')),
+                              ("How to use:", tool.get('howToUse', '')),
+                              ("URL:", tool.get('url', ''))]:
+            pdf.set_font('Helvetica', 'B', 10)
+            pdf.cell(28, 5, safe(label), ln=False)
+            pdf.set_font('Helvetica', '', 10)
+            pdf.multi_cell(0, 5, safe(value))
+        pdf.ln(4)
+
+    # SECTION 2 — Workflow
+    s2 = product_data.get('section2', {})
+    section_header(2, s2.get('heading', 'Workflow'), s2.get('intro', ''))
+    for step in s2.get('steps', []):
+        pdf.set_fill_color(45,45,45)
+        pdf.set_text_color(255,255,255)
+        pdf.set_font('Helvetica', 'B', 13)
+        pdf.cell(0, 9, safe(f"Step {step.get('step', '')}: {step.get('title', '')}"), ln=True, fill=True)
+        pdf.set_text_color(0,0,0)
+        pdf.ln(3)
+        pdf.set_font('Helvetica', '', 11)
+        pdf.multi_cell(0, 6, safe(step.get('detail', '')))
+        pdf.ln(2)
+        pdf.set_font('Helvetica', 'I', 9)
+        pdf.set_text_color(110,110,110)
+        pdf.cell(0, 5, safe(f"Time: {step.get('timeRequired', '')}  -  Tool: {step.get('toolNeeded', '')}"), ln=True)
+        pdf.set_text_color(0,0,0)
+        pdf.ln(6)
+
+    # SECTION 3 — Revenue
+    s3 = product_data.get('section3', {})
+    section_header(3, s3.get('heading', 'Revenue System'), s3.get('intro', ''))
+    if s3.get('disclaimer'):
+        pdf.set_font('Helvetica', 'I', 9)
+        pdf.set_text_color(150,30,30)
+        pdf.multi_cell(0, 5, safe(s3.get('disclaimer', '')))
+        pdf.set_text_color(0,0,0)
+        pdf.ln(5)
+    for tier in s3.get('tiers', []):
+        pdf.set_fill_color(230,240,250)
+        pdf.set_font('Helvetica', 'B', 13)
+        pdf.cell(0, 9, safe(f"Tier {tier.get('tier', '')}: {tier.get('name', '')}"), ln=True, fill=True)
+        pdf.ln(3)
+        pdf.set_font('Helvetica', '', 11)
+        pdf.multi_cell(0, 6, safe(tier.get('howItWorks', '')))
+        pdf.ln(2)
+        for label, value in [("Expected monthly:", tier.get('expectedMonthly', '')),
+                              ("Time to first income:", tier.get('timeToFirstIncome', ''))]:
+            pdf.set_font('Helvetica', 'B', 10)
+            pdf.cell(60, 5, safe(label), ln=False)
+            pdf.set_font('Helvetica', '', 10)
+            pdf.cell(0, 5, safe(value), ln=True)
+        pdf.ln(5)
+
+    # SECTION 4 — Hooks
+    s4 = product_data.get('section4', {})
+    section_header(4, s4.get('heading', 'Viral Hooks'), s4.get('intro', ''))
+    for i, hook in enumerate(s4.get('hooks', []), 1):
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.cell(10, 6, f"{i}.", ln=False)
+        pdf.set_font('Helvetica', '', 10)
+        pdf.multi_cell(0, 6, safe(hook))
+        pdf.ln(1)
+
+    # SECTION 5 — 30-Day Plan
+    s5 = product_data.get('section5', {})
+    section_header(5, s5.get('heading', '30-Day Plan'), s5.get('intro', ''))
+    for day in s5.get('days', []):
+        pdf.set_fill_color(240,240,240)
+        pdf.set_font('Helvetica', 'B', 11)
+        pdf.cell(0, 7, safe(f"{day.get('day', '')}: {day.get('goal', '')}"), ln=True, fill=True)
+        pdf.ln(2)
+        pdf.set_font('Helvetica', '', 10)
+        for task in day.get('tasks', []):
+            pdf.cell(8, 5, "", ln=False)
+            pdf.multi_cell(0, 5, safe(f"- {task}"))
+        pdf.ln(3)
+
+    output = pdf.output(dest='S')
+    if isinstance(output, str):
+        return output.encode('latin-1')
+    if isinstance(output, bytearray):
+        return bytes(output)
+    return output
