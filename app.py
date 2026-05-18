@@ -2182,10 +2182,124 @@ Price: £{pd_data.get('price',17)}
                 st.rerun()
         with c2:
             if passed:
-                st.success("✅ Ready for Gumroad — Phase 2 coming next")
+                st.markdown("**✅ Ready for Gumroad upload**")
+                if "gumroad_result" not in st.session_state:
+                    st.session_state.gumroad_result = None
+
+                if st.session_state.gumroad_result and st.session_state.gumroad_result.get("success"):
+                    g = st.session_state.gumroad_result
+                    st.success(f"🎉 Product live on Gumroad!")
+                    st.markdown(f"**Product URL:** [{g['product_url']}]({g['product_url']})")
+                    st.markdown(f"**Edit on Gumroad:** [Open editor]({g['edit_url']})")
+                    if g.get("note"):
+                        st.info(g["note"])
+                else:
+                    if st.button("🚀 Upload to Gumroad", type="primary", use_container_width=True):
+                        with st.spinner("Agent 8 uploading product to Gumroad..."):
+                            try:
+                                result = agent_gumroad_publisher(pd_data, qa)
+                                st.session_state.gumroad_result = result
+                                if result.get("success"):
+                                    st.success("Uploaded successfully!")
+                                else:
+                                    st.error(f"Upload failed: {result.get('error','Unknown error')}")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
             else:
                 st.warning("Fix QA issues before Gumroad upload")
 
 
 PAGE_MAP["product"] = page_product
 PAGE_MAP.get(st.session_state.page, page_setup)()
+
+# ──────────────────────────────────────────────────────────────────────────────
+# AGENT 8 — GUMROAD PUBLISHER
+# ──────────────────────────────────────────────────────────────────────────────
+
+def agent_gumroad_publisher(product_data: dict, qa_data: dict) -> dict:
+    """Uploads product to Gumroad automatically — only runs if QA passed."""
+    import requests as req_lib
+
+    token = st.secrets.get("GUMROAD_ACCESS_TOKEN", "")
+    if not token:
+        add_log("gumroad", "✗ No Gumroad token found in Streamlit Secrets")
+        return {"success": False, "error": "Missing GUMROAD_ACCESS_TOKEN in Streamlit Secrets"}
+
+    if not qa_data.get("passesQA", False):
+        add_log("gumroad", f"✗ Upload blocked — QA score {qa_data.get('overallScore',0)}/10 (need 8+)")
+        return {"success": False, "error": f"QA score too low: {qa_data.get('overallScore',0)}/10 — fix issues first"}
+
+    add_log("gumroad", "=== GUMROAD UPLOAD STARTED ===")
+
+    title       = product_data.get("gumroadTitle") or product_data.get("title", "Digital Product")
+    description = product_data.get("gumroadDescription", "")
+    price       = product_data.get("price", 17)
+    tags        = product_data.get("tags", [])
+
+    # Gumroad takes price in cents
+    price_cents = int(float(price) * 100)
+
+    add_log("gumroad", f"Creating product: '{title}' at £{price}")
+
+    try:
+        # Create the product
+        resp = req_lib.post(
+            "https://api.gumroad.com/v2/products",
+            data={
+                "access_token":            token,
+                "name":                    title[:90],
+                "price":                   price_cents,
+                "description":             description,
+            },
+            timeout=30,
+        )
+
+        add_log("gumroad", f"API response status: {resp.status_code}")
+
+        if resp.status_code != 200:
+            err_text = resp.text[:300]
+            add_log("gumroad", f"✗ API error: {err_text}")
+            return {"success": False, "error": f"Gumroad API returned {resp.status_code}: {err_text}"}
+
+        result = resp.json()
+        if not result.get("success"):
+            err_msg = result.get("message", "Unknown error")
+            add_log("gumroad", f"✗ Gumroad rejected: {err_msg}")
+            return {"success": False, "error": err_msg}
+
+        product = result.get("product", {})
+        product_id  = product.get("id", "")
+        product_url = product.get("short_url") or product.get("url", "")
+
+        add_log("gumroad", f"✓ Product created — ID: {product_id}")
+        add_log("gumroad", f"✓ Product URL: {product_url}")
+
+        # Add tags
+        if tags:
+            add_log("gumroad", f"Adding {len(tags)} tags...")
+            for tag in tags[:5]:
+                req_lib.put(
+                    f"https://api.gumroad.com/v2/products/{product_id}",
+                    data={"access_token": token, "tags[]": tag},
+                    timeout=15,
+                )
+
+        add_log("gumroad", "=== UPLOAD COMPLETE ✓ ===")
+
+        return {
+            "success":      True,
+            "product_id":   product_id,
+            "product_url":  product_url,
+            "title":        title,
+            "price":        f"£{price}",
+            "edit_url":     f"https://app.gumroad.com/products/{product_id}/edit",
+            "note":         "Product created as DRAFT. You must upload the actual PDF file and click Publish on Gumroad to make it live.",
+        }
+
+    except req_lib.exceptions.Timeout:
+        add_log("gumroad", "✗ Request timed out")
+        return {"success": False, "error": "Gumroad API timed out — try again"}
+    except Exception as e:
+        add_log("gumroad", f"✗ Exception: {str(e)[:200]}")
+        return {"success": False, "error": str(e)[:300]}
