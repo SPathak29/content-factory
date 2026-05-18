@@ -1699,88 +1699,77 @@ PAGE_MAP["analytics"] = page_analytics
 # ──────────────────────────────────────────────────────────────────────────────
 
 def agent_product_creator() -> dict:
-    """Creates the full £17 digital product content automatically."""
-    product  = st.session_state.get("product", "The AI Content Creator Starter Kit")
-    niche    = st.session_state.get("niche", "AI tools and side income")
-    price    = st.session_state.get("product_price", 17)
-    scripts  = st.session_state.get("scripts", [])
-
-    top_hooks = [s.get("script","")[:120] for s in scripts if s.get("status")=="approved"][:3]
-    hook_examples = "\n".join(top_hooks) if top_hooks else ""
+    """Creates the full £17 digital product — section by section for reliability."""
+    product = st.session_state.get("product", "The AI Content Creator Starter Kit")
+    niche   = st.session_state.get("niche", "AI tools and side income")
+    price   = st.session_state.get("product_price", 17)
 
     add_log("productCreator", f"Writing full product: '{product}' at £{price}")
-    add_log("productCreator", "Generating Section 1: Top AI tools curated list...")
 
-    raw = call_claude([{"role": "user", "content": f"""
-You are a professional digital product creator specialising in online business education.
+    # SECTION 1 — Tools
+    add_log("productCreator", "Section 1/6: AI tools list...")
+    r1 = call_claude([{"role":"user","content":f"""Generate Section 1 of a £{price} guide '{product}' for the niche: {niche}.
+Return ONLY valid JSON (no markdown, no code fences):
+{{"heading":"The 8 Best AI Tools for Content Creators","intro":"2-3 sentence intro","tools":[{{"name":"","url":"","cost":"Free or £X/mo","bestFor":"","howToUse":"2-3 sentence guide","affiliateNote":""}}]}}
+Include exactly 8 real AI tools with real working URLs covering: scriptwriting, voice-over, video editing, image generation, design, scheduling, productivity, automation."""}])
+    s1 = extract_json(r1) or {}
 
-Create the COMPLETE content for a £{price} digital guide called '{product}'.
-Target audience: complete beginners who want to build side income using AI tools and digital products.
-Niche context: {niche}
+    # SECTION 2 — Workflow
+    add_log("productCreator", "Section 2/6: Daily workflow...")
+    r2 = call_claude([{"role":"user","content":f"""Generate Section 2 of a £{price} guide '{product}'.
+Return ONLY valid JSON:
+{{"heading":"Your Exact 3-Videos-Per-Day Workflow","intro":"2-3 sentences","steps":[{{"step":1,"title":"","detail":"3-4 sentences","timeRequired":"X min","toolNeeded":""}}]}}
+Include exactly 6 workflow steps to produce 3 videos per day."""}])
+    s2 = extract_json(r2) or {}
 
-Write ALL FIVE sections in full. Every section must be detailed, accurate, and genuinely useful.
-Do NOT use placeholder text. Write the actual content a buyer would receive.
+    # SECTION 3 — Revenue
+    add_log("productCreator", "Section 3/6: 4-tier revenue system...")
+    r3 = call_claude([{"role":"user","content":f"""Generate Section 3 of a £{price} guide '{product}'.
+Return ONLY valid JSON:
+{{"heading":"The 4-Tier Revenue System Explained","intro":"2-3 sentences","tiers":[{{"tier":1,"name":"","howItWorks":"3-4 sentences","expectedMonthly":"£X-Y","timeToFirstIncome":"X weeks"}}]}}
+Cover all 4 tiers: 1) Digital product sales, 2) Affiliate commissions, 3) Newsletter sponsorships, 4) TikTok Creator Rewards."""}])
+    s3 = extract_json(r3) or {}
 
-Recent viral hooks from our content (for tone reference):
-{hook_examples}
+    # SECTION 4 — Hooks
+    add_log("productCreator", "Section 4/6: 30 viral hooks...")
+    r4 = call_claude([{"role":"user","content":f"""Generate Section 4 of a £{price} guide '{product}'.
+Return ONLY valid JSON:
+{{"heading":"30 Viral Hook Templates That Stop Scrolling","intro":"2-3 sentences","hooks":["hook 1","hook 2"]}}
+Include exactly 30 viral hook opening lines for short-form videos about AI tools, side income, and productivity."""}])
+    s4 = extract_json(r4) or {}
 
-Return ONLY valid JSON (no markdown):
-{{
-  "title": "{product}",
-  "subtitle": "Your complete beginner guide to building side income with AI tools",
-  "price": {price},
-  "section1": {{
-    "heading": "The 10 Best Free and Low-Cost AI Tools for Content Creators",
-    "intro": "2-3 sentence intro",
-    "tools": [
-      {{"name": "", "url": "", "cost": "Free/£X/mo", "bestFor": "", "howToUse": "2-3 sentence practical guide", "affiliateNote": ""}}
-    ]
-  }},
-  "section2": {{
-    "heading": "Your Exact 3-Videos-Per-Day Workflow",
-    "intro": "2-3 sentence intro",
-    "steps": [
-      {{"step": 1, "title": "", "detail": "3-4 sentences of practical instruction", "timeRequired": "", "toolNeeded": ""}}
-    ]
-  }},
-  "section3": {{
-    "heading": "The 4-Tier Revenue System Explained",
-    "intro": "2-3 sentence intro",
-    "tiers": [
-      {{"tier": 1, "name": "", "howItWorks": "3-4 sentences", "expectedMonthly": "", "timeToFirstIncome": ""}}
-    ]
-  }},
-  "section4": {{
-    "heading": "30 Viral Hook Templates That Stop Scrolling",
-    "intro": "2-3 sentence intro",
-    "hooks": ["hook1", "hook2"]
-  }},
-  "section5": {{
-    "heading": "Your 30-Day Action Plan",
-    "intro": "2-3 sentence intro",
-    "days": [
-      {{"day": "Day 1", "tasks": ["task1", "task2"], "goal": ""}}
-    ]
-  }},
-  "gumroadTitle": "short compelling title for Gumroad listing",
-  "gumroadDescription": "full compelling Gumroad product description, 150-200 words",
-  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
-}}
+    # SECTION 5 — 30-Day Plan
+    add_log("productCreator", "Section 5/6: 30-day action plan...")
+    r5 = call_claude([{"role":"user","content":f"""Generate Section 5 of a £{price} guide '{product}'.
+Return ONLY valid JSON:
+{{"heading":"Your 30-Day Action Plan","intro":"2-3 sentences","days":[{{"day":"Day 1","tasks":["task 1","task 2"],"goal":""}}]}}
+Include all 30 days. You can group consecutive days where appropriate (e.g. 'Day 5-7') to keep response concise but every day must be covered."""}])
+    s5 = extract_json(r5) or {}
 
-Requirements:
-- Section 1: Include exactly 8 real AI tools with real URLs
-- Section 2: Include exactly 6 workflow steps
-- Section 3: Cover all 4 revenue tiers in detail
-- Section 4: Include exactly 30 hook templates
-- Section 5: Cover all 30 days with daily tasks
-"""}])
+    # METADATA — Gumroad listing
+    add_log("productCreator", "Section 6/6: Gumroad listing metadata...")
+    r6 = call_claude([{"role":"user","content":f"""Create Gumroad metadata for '{product}' at £{price}.
+Return ONLY valid JSON:
+{{"title":"{product}","subtitle":"compelling subtitle","gumroadTitle":"short compelling title","gumroadDescription":"150-200 word compelling description","tags":["tag1","tag2","tag3","tag4","tag5"]}}"""}])
+    meta = extract_json(r6) or {}
 
-    product_data = extract_json(raw)
-    if product_data:
-        add_log("productCreator", f"Product content generated — {len(str(product_data))} characters")
-        add_log("productCreator", f"Section 4: {len(product_data.get('section4',{}).get('hooks',[]))} hooks written")
-        add_log("productCreator", f"Section 5: {len(product_data.get('section5',{}).get('days',[]))} days planned")
-    return product_data or {}
+    product_data = {
+        "title":              meta.get("title", product),
+        "subtitle":           meta.get("subtitle", ""),
+        "price":              price,
+        "section1":           s1,
+        "section2":           s2,
+        "section3":           s3,
+        "section4":           s4,
+        "section5":           s5,
+        "gumroadTitle":       meta.get("gumroadTitle", product),
+        "gumroadDescription": meta.get("gumroadDescription", ""),
+        "tags":               meta.get("tags", []),
+    }
+
+    sections_ok = sum(1 for s in [s1,s2,s3,s4,s5] if s)
+    add_log("productCreator", f"Product complete — {sections_ok}/5 sections generated, {len(s4.get('hooks',[]))} hooks, {len(s5.get('days',[]))} days")
+    return product_data
 
 
 # ──────────────────────────────────────────────────────────────────────────────
