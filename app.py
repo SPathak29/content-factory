@@ -1743,13 +1743,33 @@ Return ONLY valid JSON:
 Include exactly 30 viral hook opening lines for short-form videos about AI tools, side income, and productivity."""}])
     s4 = _dict_or(extract_json(r4), "hooks")
 
-    # SECTION 5 — 30-Day Plan
-    add_log("productCreator", "Section 5/6: 30-day action plan...")
-    r5 = call_claude([{"role":"user","content":f"""Generate Section 5 of a £{price} guide '{product}'.
+    # SECTION 5 — 30-Day Plan (split into 3 chunks of 10 days for reliability)
+    add_log("productCreator", "Section 5a/6: Days 1-10...")
+    r5a = call_claude([{"role":"user","content":f"""Generate Days 1-10 of a 30-day action plan for '{product}' (niche: {niche}).
 Return ONLY valid JSON:
-{{"heading":"Your 30-Day Action Plan","intro":"2-3 sentences","days":[{{"day":"Day 1","tasks":["task 1","task 2"],"goal":""}}]}}
-Include all 30 days. You can group consecutive days where appropriate (e.g. 'Day 5-7') to keep response concise but every day must be covered."""}])
-    s5 = _dict_or(extract_json(r5), "days")
+{{"days":[{{"day":"Day 1","tasks":["task 1","task 2","task 3"],"goal":"specific daily goal"}}]}}
+Generate exactly 10 days. Focus: setup, foundation, first videos, account creation, niche research."""}])
+    days1 = _dict_or(extract_json(r5a), "days").get("days", []) or []
+
+    add_log("productCreator", "Section 5b/6: Days 11-20...")
+    r5b = call_claude([{"role":"user","content":f"""Generate Days 11-20 of a 30-day action plan for '{product}'.
+Return ONLY valid JSON:
+{{"days":[{{"day":"Day 11","tasks":["task 1","task 2","task 3"],"goal":"specific daily goal"}}]}}
+Generate exactly 10 days. Focus: consistency, optimisation, audience growth, first affiliate links, newsletter setup."""}])
+    days2 = _dict_or(extract_json(r5b), "days").get("days", []) or []
+
+    add_log("productCreator", "Section 5c/6: Days 21-30...")
+    r5c = call_claude([{"role":"user","content":f"""Generate Days 21-30 of a 30-day action plan for '{product}'.
+Return ONLY valid JSON:
+{{"days":[{{"day":"Day 21","tasks":["task 1","task 2","task 3"],"goal":"specific daily goal"}}]}}
+Generate exactly 10 days. Focus: product launch on Gumroad, scaling content, monetisation, reinvesting income."""}])
+    days3 = _dict_or(extract_json(r5c), "days").get("days", []) or []
+
+    s5 = {
+        "heading": "Your 30-Day Action Plan",
+        "intro": "A complete day-by-day blueprint to launch your AI content business and start generating side income within 30 days.",
+        "days": days1 + days2 + days3
+    }
 
     # METADATA — Gumroad listing
     add_log("productCreator", "Section 6/6: Gumroad listing metadata...")
@@ -1790,8 +1810,14 @@ def agent_product_qa(product_data: dict) -> dict:
 You are a strict digital product quality auditor. Review this product content thoroughly.
 
 PRODUCT DATA:
-{json.dumps(product_data, indent=2)[:4000]}
+{json.dumps(product_data, indent=2)[:30000]}
 
+SECTION COUNTS (verified by system before audit):
+- Section 1 tools: {len(product_data.get('section1',{}).get('tools',[]))}
+- Section 2 steps: {len(product_data.get('section2',{}).get('steps',[]))}
+- Section 3 tiers: {len(product_data.get('section3',{}).get('tiers',[]))}
+- Section 4 hooks: {len(product_data.get('section4',{}).get('hooks',[]))}
+- Section 5 days: {len(product_data.get('section5',{}).get('days',[]))}
 Check every section against these criteria:
 
 COMPLETENESS:
