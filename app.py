@@ -2060,6 +2060,47 @@ def page_product():
         c5.metric("Compliance",   f"{qa.get('complianceScore',0)}/10")
         c6.metric("Value",        f"{qa.get('valueScore',0)}/10")
 
+# SMART PRICE OPTIMIZER
+        if passed and "price_analysis" not in st.session_state:
+            with st.spinner("Agent 9 analysing optimal pricing strategy..."):
+                st.session_state.price_analysis = agent_price_optimizer(pd_data, qa)
+
+        if passed and st.session_state.get("price_analysis"):
+            pa = st.session_state.price_analysis
+            launch = pa.get("launchPrice", pd_data.get("price",17))
+            target = pa.get("targetPrice", launch)
+            current = pd_data.get("price", 17)
+
+            if launch != current:
+                st.markdown("---")
+                st.markdown("### 💰 Smart Pricing Recommendation")
+                pc1, pc2, pc3 = st.columns(3)
+                pc1.metric("Current price",    f"£{current}")
+                pc2.metric("Launch price",     f"£{launch}", delta=f"{launch-current:+}")
+                pc3.metric("Target price",     f"£{target}", delta=f"{target-current:+}")
+
+                st.info(f"**Reasoning:** {pa.get('reasoning','')}")
+                if pa.get("expectedImpact"):
+                    st.caption(f"**Expected impact:** {pa.get('expectedImpact','')}")
+
+                if pa.get("milestones"):
+                    with st.expander("📈 Price increase roadmap"):
+                        for m in pa.get("milestones",[]):
+                            st.markdown(f"- **{m.get('trigger','')}** → raise to **£{m.get('newPrice','')}** _({m.get('reasoning','')})_")
+
+                ac1, ac2 = st.columns(2)
+                with ac1:
+                    if st.button(f"✅ Apply £{launch} launch price", type="primary", use_container_width=True):
+                        st.session_state.product_price = launch
+                        if isinstance(st.session_state.product_data, dict):
+                            st.session_state.product_data["price"] = launch
+                        st.success(f"Price updated to £{launch}")
+                        st.rerun()
+                with ac2:
+                    if st.button("Keep current price", use_container_width=True):
+                        st.session_state.price_analysis["userKeptPrice"] = True
+                        st.rerun()
+                st.markdown("---")
         details = qa.get("_details", {})
         if details:
             with st.expander("📊 Detailed QA breakdown"):
@@ -2303,3 +2344,67 @@ def agent_gumroad_publisher(product_data: dict, qa_data: dict) -> dict:
     except Exception as e:
         add_log("gumroad", f"✗ Exception: {str(e)[:200]}")
         return {"success": False, "error": str(e)[:300]}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# AGENT 9 — SMART PRICE OPTIMIZER
+# ──────────────────────────────────────────────────────────────────────────────
+
+def agent_price_optimizer(product_data: dict, qa_data: dict) -> dict:
+    """Smart pricing agent — recommends optimal launch price + milestone roadmap."""
+
+    current_price = product_data.get("price", 17)
+    qa_details    = qa_data.get("_details", {})
+    comparable    = qa_details.get("comparablePrice", "")
+    verdict       = qa_details.get("valueVerdict", "")
+    value_score   = qa_data.get("valueScore", 7)
+    quality_score = qa_data.get("qualityScore", 7)
+    completeness  = qa_data.get("completenessScore", 7)
+
+    add_log("priceOptimizer", "=== SMART PRICING ANALYSIS ===")
+    add_log("priceOptimizer", f"Current: £{current_price} · Comparable range: {comparable} · Verdict: {verdict}")
+
+    raw = call_claude([{"role":"user","content":f"""You are a digital product pricing strategist for first-time creators.
+
+PRODUCT: {product_data.get('title','')}
+Current price: £{current_price}
+Comparable products sell for: {comparable}
+Value verdict from QA: {verdict}
+Scores → Value:{value_score}/10  Quality:{quality_score}/10  Completeness:{completeness}/10
+Target audience: Complete beginners looking to start AI side income
+
+REALITY CHECK:
+- Zero reviews yet (first product, first launch)
+- No established audience
+- Goal: balance maximising revenue vs maximising first-sales velocity
+- £17 = impulse-buy sweet spot
+- £15 floor = "looks cheap/thin"
+- £25 ceiling without reviews = "needs social proof first"
+- Most successful first launches sit in £15-£25 range
+- Price can be raised over time as reviews accumulate
+
+Return ONLY valid JSON:
+{{
+  "launchPrice": 17,
+  "targetPrice": 27,
+  "priceUpdateRecommended": true,
+  "currentPriceVerdict": "underpriced/optimal/overpriced",
+  "reasoning": "2-3 sentences why this launch price",
+  "expectedImpact": "what changes at this price",
+  "milestones": [
+    {{"trigger":"First 10 sales","newPrice":19,"reasoning":"Initial social proof established"}},
+    {{"trigger":"20 sales + 5 reviews","newPrice":23,"reasoning":"Reviews validate quality"}},
+    {{"trigger":"50 sales","newPrice":27,"reasoning":"Strong demand confirmed"}}
+  ]
+}}
+
+CRITICAL: launchPrice should be optimal for FIRST SALES (not theoretical max). targetPrice is the eventual ceiling. Don't blindly raise to comparable — factor in zero-reviews reality."""}])
+
+    result = extract_json(raw) or {}
+    if not isinstance(result, dict): result = {}
+
+    launch = result.get("launchPrice", current_price)
+    target = result.get("targetPrice", current_price)
+    add_log("priceOptimizer", f"Recommended launch: £{launch} · Target: £{target}")
+    add_log("priceOptimizer", f"Verdict: {result.get('currentPriceVerdict','')}")
+
+    return result
