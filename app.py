@@ -2441,19 +2441,28 @@ def generate_product_pdf(product_data: dict) -> bytes:
         return text.encode('latin-1', errors='replace').decode('latin-1')
 
     pdf = FPDF(format='A4')
+    pdf.set_margins(15, 15, 15)
     pdf.set_auto_page_break(auto=True, margin=20)
 
     title    = product_data.get('title', 'Digital Product')
     subtitle = product_data.get('subtitle', '')
     price    = product_data.get('price', 17)
 
+    def field(label, value):
+        """Write label (bold) then value (regular) on separate lines."""
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.multi_cell(0, 5, safe(label))
+        pdf.set_font('Helvetica', '', 10)
+        pdf.multi_cell(0, 5, safe(value))
+        pdf.ln(1)
+
     # COVER
     pdf.add_page()
     pdf.set_y(70)
-    pdf.set_font('Helvetica', 'B', 30)
+    pdf.set_font('Helvetica', 'B', 28)
     pdf.multi_cell(0, 14, safe(title), align='C')
     pdf.ln(6)
-    pdf.set_font('Helvetica', '', 14)
+    pdf.set_font('Helvetica', '', 13)
     pdf.set_text_color(80,80,80)
     pdf.multi_cell(0, 8, safe(subtitle), align='C')
     pdf.set_text_color(0,0,0)
@@ -2493,14 +2502,10 @@ def generate_product_pdf(product_data: dict) -> bytes:
         pdf.cell(0, 5, safe(f"   {tool.get('cost', '')}"), ln=True, fill=True)
         pdf.set_text_color(0,0,0)
         pdf.ln(3)
-        for label, value in [("Best for:", tool.get('bestFor', '')),
-                              ("How to use:", tool.get('howToUse', '')),
-                              ("URL:", tool.get('url', ''))]:
-            pdf.set_font('Helvetica', 'B', 10)
-            pdf.cell(28, 5, safe(label), ln=False)
-            pdf.set_font('Helvetica', '', 10)
-            pdf.multi_cell(0, 5, safe(value))
-        pdf.ln(4)
+        field("Best for:", tool.get('bestFor', ''))
+        field("How to use:", tool.get('howToUse', ''))
+        field("URL:", tool.get('url', ''))
+        pdf.ln(3)
 
     # SECTION 2 — Workflow
     s2 = product_data.get('section2', {})
@@ -2517,7 +2522,7 @@ def generate_product_pdf(product_data: dict) -> bytes:
         pdf.ln(2)
         pdf.set_font('Helvetica', 'I', 9)
         pdf.set_text_color(110,110,110)
-        pdf.cell(0, 5, safe(f"Time: {step.get('timeRequired', '')}  -  Tool: {step.get('toolNeeded', '')}"), ln=True)
+        pdf.multi_cell(0, 5, safe(f"Time: {step.get('timeRequired', '')}  -  Tool: {step.get('toolNeeded', '')}"))
         pdf.set_text_color(0,0,0)
         pdf.ln(6)
 
@@ -2538,22 +2543,16 @@ def generate_product_pdf(product_data: dict) -> bytes:
         pdf.set_font('Helvetica', '', 11)
         pdf.multi_cell(0, 6, safe(tier.get('howItWorks', '')))
         pdf.ln(2)
-        for label, value in [("Expected monthly:", tier.get('expectedMonthly', '')),
-                              ("Time to first income:", tier.get('timeToFirstIncome', ''))]:
-            pdf.set_font('Helvetica', 'B', 10)
-            pdf.cell(60, 5, safe(label), ln=False)
-            pdf.set_font('Helvetica', '', 10)
-            pdf.cell(0, 5, safe(value), ln=True)
-        pdf.ln(5)
+        field("Expected monthly:", tier.get('expectedMonthly', ''))
+        field("Time to first income:", tier.get('timeToFirstIncome', ''))
+        pdf.ln(3)
 
     # SECTION 4 — Hooks
     s4 = product_data.get('section4', {})
     section_header(4, s4.get('heading', 'Viral Hooks'), s4.get('intro', ''))
     for i, hook in enumerate(s4.get('hooks', []), 1):
-        pdf.set_font('Helvetica', 'B', 10)
-        pdf.cell(10, 6, f"{i}.", ln=False)
         pdf.set_font('Helvetica', '', 10)
-        pdf.multi_cell(0, 6, safe(hook))
+        pdf.multi_cell(0, 6, safe(f"{i}. {hook}"))
         pdf.ln(1)
 
     # SECTION 5 — 30-Day Plan
@@ -2566,7 +2565,6 @@ def generate_product_pdf(product_data: dict) -> bytes:
         pdf.ln(2)
         pdf.set_font('Helvetica', '', 10)
         for task in day.get('tasks', []):
-            pdf.cell(8, 5, "", ln=False)
             pdf.multi_cell(0, 5, safe(f"- {task}"))
         pdf.ln(3)
 
