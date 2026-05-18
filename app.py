@@ -265,9 +265,9 @@ Return ONLY JSON:
 ]}}
 """}])
     strategy = extract_json(raw)
-if isinstance(strategy, list):
-    strategy = {"selections": strategy}
-strategy = strategy or {
+    if isinstance(strategy, list):
+        strategy = {"selections": strategy}
+    strategy = strategy or {
         "selections": [
             {"trendIndex": i, "scriptType": "tiktok_monetized" if i == 2 else "short_retention",
              "affiliateName": "", "affiliateCommission": "", "affiliateAngle": "",
