@@ -2071,7 +2071,7 @@ def page_product():
             target = pa.get("targetPrice", launch)
             current = pd_data.get("price", 17)
 
-            if launch != current:
+            if True:  # always show pricing analysis
                 st.markdown("---")
                 st.markdown("### 💰 Smart Pricing Recommendation")
                 pc1, pc2, pc3 = st.columns(3)
