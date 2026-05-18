@@ -796,6 +796,7 @@ def page_pipeline():
             stat_ph.info("🔵 Agent 1: Trend Scout scanning live web...")
             refresh_log()
             trends = agent_trend_scout()
+            time.sleep(65)
             st.session_state.trends = trends
             st.session_state.agent_states["trendScout"] = "done"
 
