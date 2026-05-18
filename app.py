@@ -175,7 +175,7 @@ def call_claude(messages: list, use_search: bool = False) -> str:
         raise ValueError("Anthropic API key missing — add it in Setup.")
     client = anthropic.Anthropic(api_key=key)
     kwargs = {
-        "model": "claude-sonnet-4-20250514",
+        "model": "claude-sonnet-4-6",
         "max_tokens": 1800,
         "messages": messages,
     }
