@@ -2252,7 +2252,7 @@ Price: £{pd_data.get('price',17)}
 
 
 PAGE_MAP["product"] = page_product
-PAGE_MAP.get(st.session_state.page, page_setup)()
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # AGENT 8 — GUMROAD PUBLISHER
@@ -2408,3 +2408,4 @@ CRITICAL: launchPrice should be optimal for FIRST SALES (not theoretical max). t
     add_log("priceOptimizer", f"Verdict: {result.get('currentPriceVerdict','')}")
 
     return result
+PAGE_MAP.get(st.session_state.page, page_setup)()
