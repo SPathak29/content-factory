@@ -1699,7 +1699,8 @@ PAGE_MAP["analytics"] = page_analytics
 # ──────────────────────────────────────────────────────────────────────────────
 
 def agent_product_creator() -> dict:
-    """Creates the full £17 digital product — section by section for reliability."""
+    """Creates the full £17 digital product — section by section with auto-retry on failures."""
+    import time
     product = st.session_state.get("product", "The AI Content Creator Starter Kit")
     niche   = st.session_state.get("niche", "AI tools and side income")
     price   = st.session_state.get("product_price", 17)
@@ -1709,27 +1710,43 @@ def agent_product_creator() -> dict:
         if isinstance(data, list) and list_key: return {list_key: data}
         return {}
 
+    def _gen_section(prompt: str, list_key, section_name: str, max_retries: int = 3) -> dict:
+        """Generate a section with auto-retry if empty or malformed."""
+        result = {}
+        for attempt in range(1, max_retries + 1):
+            raw = call_claude([{"role":"user","content":prompt}])
+            result = _dict_or(extract_json(raw), list_key)
+            items = result.get(list_key, []) if isinstance(result, dict) and list_key else None
+            ok = isinstance(result, dict) and (items if list_key else result)
+            if ok:
+                if attempt > 1:
+                    add_log("productCreator", f"  ✓ {section_name} succeeded on attempt {attempt}")
+                return result
+            wait = 3 * attempt
+            add_log("productCreator", f"  ⚠️ {section_name} empty on attempt {attempt}/{max_retries} — retrying in {wait}s...")
+            time.sleep(wait)
+        add_log("productCreator", f"  ✗ {section_name} failed after {max_retries} attempts")
+        return result if isinstance(result, dict) else {}
+
     add_log("productCreator", f"Writing full product: '{product}' at £{price}")
 
     # SECTION 1 — Tools
     add_log("productCreator", "Section 1/6: AI tools list...")
-    r1 = call_claude([{"role":"user","content":f"""Generate Section 1 of a £{price} guide '{product}' for the niche: {niche}.
+    s1 = _gen_section(f"""Generate Section 1 of a £{price} guide '{product}' for the niche: {niche}.
 Return ONLY valid JSON (no markdown, no code fences):
 {{"heading":"The 8 Best AI Tools for Content Creators","intro":"2-3 sentence intro","tools":[{{"name":"","url":"","cost":"Free or £X/mo","bestFor":"","howToUse":"2-3 sentence guide","affiliateNote":""}}]}}
-Include exactly 8 real AI tools with real working URLs covering: scriptwriting, voice-over, video editing, image generation, design, scheduling, productivity, automation."""}])
-    s1 = _dict_or(extract_json(r1), "tools")
+Include exactly 8 real AI tools with real working URLs covering: scriptwriting, voice-over, video editing, image generation, design, scheduling, productivity, automation.""", "tools", "Section 1 (Tools)")
 
     # SECTION 2 — Workflow
     add_log("productCreator", "Section 2/6: Daily workflow...")
-    r2 = call_claude([{"role":"user","content":f"""Generate Section 2 of a £{price} guide '{product}'.
+    s2 = _gen_section(f"""Generate Section 2 of a £{price} guide '{product}'.
 Return ONLY valid JSON:
 {{"heading":"Your Exact 3-Videos-Per-Day Workflow","intro":"2-3 sentences","steps":[{{"step":1,"title":"","detail":"3-4 sentences","timeRequired":"X min","toolNeeded":""}}]}}
-Include exactly 6 workflow steps to produce 3 videos per day."""}])
-    s2 = _dict_or(extract_json(r2), "steps")
+Include exactly 6 workflow steps to produce 3 videos per day.""", "steps", "Section 2 (Workflow)")
 
-    # SECTION 3 — Revenue (compliance-aware, realistic for beginners)
+    # SECTION 3 — Revenue (compliance-aware)
     add_log("productCreator", "Section 3/6: 4-tier revenue system (compliance-aware)...")
-    r3 = call_claude([{"role":"user","content":f"""Generate Section 3 of a £{price} guide '{product}'.
+    s3 = _gen_section(f"""Generate Section 3 of a £{price} guide '{product}'.
 Return ONLY valid JSON:
 {{"heading":"The 4-Tier Revenue System","intro":"2-3 sentences INCLUDING explicit disclaimer that results vary based on effort and consistency","disclaimer":"Full disclaimer paragraph - typical results require 6-12 months consistent work, individual results vary significantly","tiers":[{{"tier":1,"name":"","howItWorks":"3-4 sentences","expectedMonthly":"realistic beginner range","monthsToFullPotential":"X months","timeToFirstIncome":"X weeks","resultsDisclaimer":"Brief caveat about effort required"}}]}}
 
@@ -1742,12 +1759,11 @@ CRITICAL COMPLIANCE REQUIREMENTS (TikTok, Meta, FTC, UK ASA):
 - EVERY tier must include resultsDisclaimer about consistency required
 - AVOID: "easy money", "anyone can", "guaranteed", "passive income with no work"
 - USE: "typical results depend on", "with consistent effort", "example range for committed creators"
-- Cover all 4 tiers: Digital products, Affiliate commissions, Newsletter sponsorships, TikTok Creator Rewards"""}])
-    s3 = _dict_or(extract_json(r3), "tiers")
+- Cover all 4 tiers: Digital products, Affiliate commissions, Newsletter sponsorships, TikTok Creator Rewards""", "tiers", "Section 3 (Revenue)")
 
-    # SECTION 4 — Hooks (compliance-aware, platform-safe)
+    # SECTION 4 — Hooks (platform-safe)
     add_log("productCreator", "Section 4/6: 30 viral hooks (platform-safe)...")
-    r4 = call_claude([{"role":"user","content":f"""Generate Section 4 of a £{price} guide '{product}'.
+    s4 = _gen_section(f"""Generate Section 4 of a £{price} guide '{product}'.
 Return ONLY valid JSON:
 {{"heading":"30 Viral Hook Templates That Stop Scrolling","intro":"2-3 sentences with note that hooks should be adapted to your real experience","complianceNote":"Brief reminder that specific income claims must be your actual results not fabricated","hooks":["hook 1","hook 2"]}}
 
@@ -1762,43 +1778,38 @@ CRITICAL: Generate 30 hooks that are PLATFORM-SAFE:
   * "The 3 AI workflows I use every morning before opening email"
   * "Most people use ChatGPT wrong - here's the prompt structure that works"
 - Mix curiosity, contrarian opinions, specific tools, time-based experiments, and process reveals
-- 30 hooks total, diverse patterns, all platform-safe"""}])
-    s4 = _dict_or(extract_json(r4), "hooks")
+- 30 hooks total, diverse patterns, all platform-safe""", "hooks", "Section 4 (Hooks)")
 
-    # SECTION 5 — 30-Day Plan (split into 3 chunks of 10 days for reliability)
+    # SECTION 5 — 30-Day Plan (split into 3 chunks of 10 days)
     add_log("productCreator", "Section 5a/6: Days 1-10...")
-    r5a = call_claude([{"role":"user","content":f"""Generate Days 1-10 of a 30-day action plan for '{product}' (niche: {niche}).
+    days1 = _gen_section(f"""Generate Days 1-10 of a 30-day action plan for '{product}' (niche: {niche}).
 Return ONLY valid JSON:
 {{"days":[{{"day":"Day 1","tasks":["task 1","task 2","task 3"],"goal":"specific daily goal"}}]}}
-Generate exactly 10 days. Focus: setup, foundation, first videos, account creation, niche research."""}])
-    days1 = _dict_or(extract_json(r5a), "days").get("days", []) or []
+Generate exactly 10 days. Focus: setup, foundation, first videos, account creation, niche research.""", "days", "Section 5a (Days 1-10)").get("days", []) or []
 
     add_log("productCreator", "Section 5b/6: Days 11-20...")
-    r5b = call_claude([{"role":"user","content":f"""Generate Days 11-20 of a 30-day action plan for '{product}'.
+    days2 = _gen_section(f"""Generate Days 11-20 of a 30-day action plan for '{product}'.
 Return ONLY valid JSON:
 {{"days":[{{"day":"Day 11","tasks":["task 1","task 2","task 3"],"goal":"specific daily goal"}}]}}
-Generate exactly 10 days. Focus: consistency, optimisation, audience growth, first affiliate links, newsletter setup."""}])
-    days2 = _dict_or(extract_json(r5b), "days").get("days", []) or []
+Generate exactly 10 days. Focus: consistency, optimisation, audience growth, first affiliate links, newsletter setup.""", "days", "Section 5b (Days 11-20)").get("days", []) or []
 
     add_log("productCreator", "Section 5c/6: Days 21-30...")
-    r5c = call_claude([{"role":"user","content":f"""Generate Days 21-30 of a 30-day action plan for '{product}'.
+    days3 = _gen_section(f"""Generate Days 21-30 of a 30-day action plan for '{product}'.
 Return ONLY valid JSON:
 {{"days":[{{"day":"Day 21","tasks":["task 1","task 2","task 3"],"goal":"specific daily goal"}}]}}
-Generate exactly 10 days. Focus: product launch on Gumroad, scaling content, monetisation, reinvesting income."""}])
-    days3 = _dict_or(extract_json(r5c), "days").get("days", []) or []
+Generate exactly 10 days. Focus: product launch on Gumroad, scaling content, monetisation, reinvesting income.""", "days", "Section 5c (Days 21-30)").get("days", []) or []
 
     s5 = {
         "heading": "Your 30-Day Action Plan",
-        "intro": "A complete day-by-day blueprint to launch your AI content business and start generating side income within 30 days.",
-        "days": days1 + days2 + days3
+        "intro":   "A complete day-by-day blueprint to launch your AI content business and start generating side income within 30 days.",
+        "days":    days1 + days2 + days3
     }
 
     # METADATA — Gumroad listing
     add_log("productCreator", "Section 6/6: Gumroad listing metadata...")
-    r6 = call_claude([{"role":"user","content":f"""Create Gumroad metadata for '{product}' at £{price}.
+    meta = _gen_section(f"""Create Gumroad metadata for '{product}' at £{price}.
 Return ONLY valid JSON:
-{{"title":"{product}","subtitle":"compelling subtitle","gumroadTitle":"short compelling title","gumroadDescription":"150-200 word compelling description","tags":["tag1","tag2","tag3","tag4","tag5"]}}"""}])
-    meta = _dict_or(extract_json(r6), None)
+{{"title":"{product}","subtitle":"compelling subtitle","gumroadTitle":"short compelling title","gumroadDescription":"150-200 word compelling description","tags":["tag1","tag2","tag3","tag4","tag5"]}}""", None, "Metadata")
 
     product_data = {
         "title":              meta.get("title", product),
@@ -1814,8 +1825,8 @@ Return ONLY valid JSON:
         "tags":               meta.get("tags", []),
     }
 
-    sections_ok = sum(1 for s in [s1,s2,s3,s4,s5] if s)
-    add_log("productCreator", f"Product complete — {sections_ok}/5 sections generated, {len(s4.get('hooks',[]))} hooks, {len(s5.get('days',[]))} days")
+    sections_ok = sum(1 for s in [s1,s2,s3,s4,s5] if s and any(s.values()))
+    add_log("productCreator", f"Product complete — {sections_ok}/5 sections, {len(s4.get('hooks',[]))} hooks, {len(s5.get('days',[]))} days")
     return product_data
 
 
