@@ -264,7 +264,10 @@ Return ONLY JSON:
   {{"trendIndex":2,"scriptType":"tiktok_monetized","affiliateName":"","affiliateCommission":"","affiliateAngle":"","postingSlot":"Monday 19:30"}}
 ]}}
 """}])
-    strategy = extract_json(raw) or {
+    strategy = extract_json(raw)
+if isinstance(strategy, list):
+    strategy = {"selections": strategy}
+strategy = strategy or {
         "selections": [
             {"trendIndex": i, "scriptType": "tiktok_monetized" if i == 2 else "short_retention",
              "affiliateName": "", "affiliateCommission": "", "affiliateAngle": "",
