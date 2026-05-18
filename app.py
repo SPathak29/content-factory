@@ -2438,7 +2438,11 @@ def generate_product_pdf(product_data: dict) -> bytes:
         repl = {'—':'-','–':'-','"':'"','"':'"',''':"'",''':"'",'…':'...','•':'*','✓':'+','→':'->','✅':'','⚠️':'!','❌':'x','🚀':'','📦':'','💰':'','🎣':'','📅':'','🔧':'','📹':''}
         for old, new in repl.items():
             text = text.replace(old, new)
-        return text.encode('latin-1', errors='replace').decode('latin-1')
+        text = text.encode('latin-1', errors='replace').decode('latin-1')
+        # Break any sequence of 60+ non-space characters (URLs etc) so multi_cell can wrap
+        import re
+        text = re.sub(r'(\S{60})', r'\1 ', text)
+        return text
 
     pdf = FPDF(format='A4')
     pdf.set_margins(15, 15, 15)
