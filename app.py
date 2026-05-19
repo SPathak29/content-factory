@@ -2266,6 +2266,7 @@ Price: £{pd_data.get('price',17)}
 
 
 PAGE_MAP["product"] = page_product
+PAGE_MAP["video_renderer"] = page_video_renderer
 
 
 # ──────────────────────────────────────────────────────────────────────────────
