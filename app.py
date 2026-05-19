@@ -2588,7 +2588,53 @@ def generate_product_pdf(product_data: dict) -> bytes:
 def page_video_renderer():
     st.title("🎬 Video Renderer")
     st.caption("Agent 10 renders your approved scripts into finished videos.")
+    # 🔧 DEBUG SECTION - tests API connection without needing scripts
+    with st.expander("🔧 Debug: Test API Connections", expanded=True):
+        eleven_key = st.secrets.get("ELEVENLABS_API_KEY", "")
+        voice_id   = st.secrets.get("ELEVENLABS_VOICE_ID", "")
+        revid_key  = st.secrets.get("REVID_API_KEY", "")
 
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if eleven_key:
+                st.success(f"✅ ElevenLabs key\n{eleven_key[:5]}...{eleven_key[-4:]}\nLength: {len(eleven_key)}")
+            else:
+                st.error("❌ ELEVENLABS_API_KEY missing")
+        with col2:
+            if voice_id:
+                st.success(f"✅ Voice ID\n{voice_id[:8]}...")
+            else:
+                st.error("❌ ELEVENLABS_VOICE_ID missing")
+        with col3:
+            if revid_key:
+                st.success(f"✅ Revid key\n{revid_key[:5]}...{revid_key[-4:]}\nLength: {len(revid_key)}")
+            else:
+                st.error("❌ REVID_API_KEY missing")
+
+        if st.button("🧪 Test ElevenLabs Connection"):
+            import requests as _req
+            with st.spinner("Testing authentication..."):
+                try:
+                    r = _req.get(
+                        "https://api.elevenlabs.io/v1/user",
+                        headers={"xi-api-key": eleven_key},
+                        timeout=15,
+                    )
+                    if r.status_code == 200:
+                        data = r.json()
+                        sub = data.get("subscription", {})
+                        st.success("✅ AUTHENTICATION WORKS!")
+                        st.json({
+                            "tier": sub.get("tier", "unknown"),
+                            "character_count": sub.get("character_count", 0),
+                            "character_limit": sub.get("character_limit", 0),
+                            "status": sub.get("status", "unknown"),
+                        })
+                    else:
+                        st.error(f"❌ Status {r.status_code}")
+                        st.code(r.text[:500])
+                except Exception as e:
+                    st.error(f"Exception: {str(e)[:200]}")
     approved = [s for s in st.session_state.scripts if s.get("status") == "approved"]
     if not approved:
         st.info("No approved scripts yet. Approve scripts in Review & Approve first.")
