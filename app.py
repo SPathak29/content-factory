@@ -2266,7 +2266,7 @@ Price: £{pd_data.get('price',17)}
 
 
 PAGE_MAP["product"] = page_product
-PAGE_MAP["video_renderer"] = page_video_renderer
+
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -2763,4 +2763,5 @@ def agent_video_renderer(script_data: dict) -> dict:
         "project_id":  project_id,
         "title":       title,
     }
+PAGE_MAP["video_renderer"] = page_video_renderer
 PAGE_MAP.get(st.session_state.page, page_setup)()
