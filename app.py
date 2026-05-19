@@ -2580,6 +2580,54 @@ def generate_product_pdf(product_data: dict) -> bytes:
     return output
 
     # ──────────────────────────────────────────────────────────────────────────────
+# PAGE: VIDEO RENDERER
+# ──────────────────────────────────────────────────────────────────────────────
+
+def page_video_renderer():
+    st.title("🎬 Video Renderer")
+    st.caption("Agent 10 renders your approved scripts into finished videos.")
+
+    approved = [s for s in st.session_state.scripts if s.get("status") == "approved"]
+    if not approved:
+        st.info("No approved scripts yet. Approve scripts in Review & Approve first.")
+        return
+
+    st.success(f"✅ {len(approved)} approved script(s) ready to render")
+    st.markdown("---")
+
+    if "rendered_videos" not in st.session_state:
+        st.session_state.rendered_videos = {}
+
+    for i, sc in enumerate(approved):
+        title       = sc.get('topicTitle', f'Script {i+1}')
+        script_text = sc.get('script') or sc.get('content', '')
+
+        with st.expander(f"🎬 Script {i+1}: {title}", expanded=(i == 0)):
+            existing = st.session_state.rendered_videos.get(i)
+
+            if existing and existing.get("success"):
+                st.success("✅ Video rendered!")
+                try:
+                    st.video(existing['video_url'])
+                except:
+                    st.markdown(f"[Open video]({existing['video_url']})")
+                st.markdown(f"[⬇️ Download MP4]({existing['video_url']})")
+                if st.button("🔄 Re-render", key=f"rerender_{i}"):
+                    del st.session_state.rendered_videos[i]
+                    st.rerun()
+            else:
+                if existing and not existing.get("success"):
+                    st.error(f"Last error: {existing.get('error', 'Unknown')}")
+
+                if st.button("🎬 Render Video", type="primary", key=f"render_{i}", use_container_width=True):
+                    with st.spinner(f"Rendering... 1-3 minutes."):
+                        try:
+                            result = agent_video_renderer({"title": title, "script": script_text})
+                            st.session_state.rendered_videos[i] = result
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error: {str(e)[:300]}")
+    # ──────────────────────────────────────────────────────────────────────────────
 # AGENT 10 — VIDEO RENDERER (ElevenLabs + Revid.ai)
 # ──────────────────────────────────────────────────────────────────────────────
 
