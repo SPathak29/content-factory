@@ -569,6 +569,7 @@ with st.sidebar:
         ("🔗  Affiliate Registry",    "affiliates"),
         ("📈  Analytics & Feedback",  "analytics"),
         ("📦  Product Creator",       "product"),
+        ("🎬 Video Renderer",       "video_renderer"),
     ]
     for label, pid in nav_items:
         if st.button(label, key=f"nav_{pid}",
