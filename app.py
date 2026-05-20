@@ -301,24 +301,39 @@ def agent_script_writer(trends: list, strategy: dict) -> list:
         feedback_ctx = get_feedback_context() if "get_feedback_context" in dir() else ""
 
         structure = (
-            "[HOOK 0-3s] Bold pattern interrupt — no intro, no names, no fluff.\n"
-            "[STAKES 3-7s] One sentence — loss-framing, why they CANNOT scroll away.\n"
-            "[PAYLOAD 7-38s] 3 rapid numbered insights. Zero filler. Each brutally punchy.\n"
+            "[HOOK 0-3s] Open with ONE plain, concrete sentence a stranger instantly understands. State the surprising idea directly, no abstract setup, no jargon. It must work whether spoken OR read on screen.\n"
+            "[STAKES 3-7s] One simple sentence: why this matters to them, in plain words.\n"
+            "[PAYLOAD 7-38s] 3 clear points, one idea each, plain spoken sentences. Concrete examples, no jargon, no filler.\n"
             f"[AFFILIATE WEAVE 38-46s] Natural mention of {aff} — angle: {aff_angle}\n"
             "[TWIST 46-54s] Final surprising insight — plant the rewatch trigger word here.\n"
             f"[NEWSLETTER CTA 54-58s] '{nl_cta}' — direct them to bio link.\n"
             f"[PRODUCT CTA 58-61s+] Seamless CTA to {product} at {gumroad}."
         ) if is_tiktok else (
-            "[HOOK 0-3s] Bold pattern interrupt — no intro whatsoever.\n"
-            "[STAKES 3-6s] Why they CANNOT scroll — loss framing.\n"
-            "[PAYLOAD 6-32s] 3 rapid numbered insights. Zero filler.\n"
+            "[HOOK 0-3s] Open with ONE plain, concrete sentence a stranger instantly understands, the surprising idea stated directly, no abstract setup, no jargon. Works spoken OR read on screen.\n"
+            "[STAKES 3-6s] One simple sentence: why this matters to them, plainly.\n"
+            "[PAYLOAD 6-32s] 3 clear points, one idea each, plain spoken sentences. Concrete, no filler.\n"
             f"[AFFILIATE WEAVE 32-38s] Natural mention of {aff} — {aff_angle}\n"
             "[TWIST 38-42s] Final surprising insight — plant rewatch trigger.\n"
             f"[PRODUCT CTA 42-45s] Seamless bio link CTA for {product}."
         )
 
         raw = call_claude([{"role": "user", "content": f"""
-You are an elite viral short-form video scriptwriter with 10M+ view scripts.
+You are a short-form scriptwriter for a CALM, CONSIDERED, ANTI-HYPE brand (mindfulAI Studio).
+Your scripts must be instantly understandable on the FIRST listen by someone scrolling fast.
+
+THE FIRST-LISTEN TEST (most important rule):
+A distracted stranger hears this ONCE, at speed, with no rewind. If they can't grasp the core idea in the first 5 seconds, you have failed. Write for clarity above cleverness, ALWAYS.
+
+CLARITY RULES (non-negotiable):
+- Reading level: a smart 12-year-old must follow it on first listen. This is NOT dumbing down — simple language lands harder.
+- ONE core idea per video. State it plainly in the first 5 seconds. No abstract setup.
+- Concrete over abstract: say "make money while you sleep", never "leverage asymmetric income architecture". Ban jargon, buzzwords, and vague nouns (synergy, ecosystem, paradigm, framework, leverage-as-verb).
+- Short spoken sentences. One idea each. The way people actually talk, not the way essays are written.
+- If a sentence needs a second listen to parse, rewrite it simpler.
+
+BRAND VOICE (hold this tension carefully):
+- Clear and plain, but CALM and grounded — NOT hype-bro. No "STOP scrolling!", no fake urgency, no ALL-CAPS shouting, no exclamation spam.
+- Confident, quiet, a little contrarian. You're the calm voice that says the true thing others won't. Think trusted friend explaining something simply, not a guru selling.
 
 TREND: {json.dumps(trend)}
 SCRIPT TYPE: {"TikTok Monetization Qualified (61s+)" if is_tiktok else "Short Retention (45s)"}
@@ -409,23 +424,25 @@ REQUIRED WORD COUNT: {word_req}
 SCRIPT TYPE: {script.get('scriptType','')}
 
 Check ALL of the following and score each 1-10:
-1. hookScore: Does the first sentence immediately stop scrolling? Is it bold enough?
+1. hookScore: Does the FIRST sentence state a clear, concrete idea a stranger grasps instantly? (Penalize abstract or jargon-heavy openings.)
 2. retentionScore: Does the body deliver genuine value rapidly? No filler?
 3. ctaScore: Is the call-to-action natural and compelling?
 4. factScore: Are all claims either verifiable or clearly framed as opinion?
-5. overallScore: Average of the above, MINUS 1 if word count is wrong, MINUS 1 if flaggedPhrases found
+5. clarityScore: FIRST-LISTEN TEST. Could a distracted stranger understand the core idea on ONE listen, at speed, with no rewind? Score 1-10. Penalize: jargon, buzzwords, abstract nouns, long sentences, more than one core idea, anything needing a second listen.
+6. overallScore: Average of all five above, MINUS 1 if word count is wrong, MINUS 1 if flaggedPhrases found
 
 Also check for:
 - Robotic AI filler: "In today's video", "Make sure to", "Without further ado", "Let's dive in", "Dive into", "I want to", "Feel free to"
 - Em-dashes (replace with commas in refinement)
 - Stage directions like [pause] or (beat)
 - Unverifiable absolute claims ("always", "100%", "never fails")
+- JARGON / buzzwords / abstract nouns that hurt first-listen clarity (e.g. "leverage", "ecosystem", "synergy", "paradigm", "framework", "optimize", "asymmetric", "scale your", "unlock") — flag any that a normal person wouldn't say out loud
 
-Set autoRefine=true if overallScore < 7 OR any flaggedPhrases found.
+Set autoRefine=true if overallScore < 7 OR clarityScore < 8 OR any flaggedPhrases found.
 
 Return ONLY valid JSON:
 {{
-  "hookScore": 0, "retentionScore": 0, "ctaScore": 0, "factScore": 0, "overallScore": 0,
+  "hookScore": 0, "retentionScore": 0, "ctaScore": 0, "factScore": 0, "clarityScore": 0, "overallScore": 0,
   "wordCountOk": true,
   "strengths": ["s1", "s2"],
   "issues": ["issue description"],
@@ -436,7 +453,7 @@ Return ONLY valid JSON:
 """}])
         qa = extract_json(raw) or {
             "hookScore": 7, "retentionScore": 7, "ctaScore": 7, "factScore": 8,
-            "overallScore": 7, "wordCountOk": True, "strengths": ["Solid structure"],
+            "clarityScore": 7, "overallScore": 7, "wordCountOk": True, "strengths": ["Solid structure"],
             "issues": [], "flaggedPhrases": [], "autoRefine": False, "refineInstructions": "",
         }
         scripts[i]["qa"] = qa
@@ -466,6 +483,7 @@ Replace any em-dashes with commas.
 Remove all stage directions like [pause] or (beat).
 
 Keep: same topic, same affiliate mention, same product CTA, same emotional hook.
+CLARITY IS THE PRIORITY: rewrite so a distracted stranger understands the core idea on the FIRST listen. Use plain words a 12-year-old knows. Replace ALL jargon and abstract nouns with concrete, spoken language. Short sentences, one idea each. Stay calm and grounded, clear not hype.
 Word target: {word_req} words EXACTLY.
 Return ONLY the improved script text — no JSON, no preamble.
 
