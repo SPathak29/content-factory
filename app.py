@@ -2827,17 +2827,7 @@ def render_ambient_short(script_text, add_log_fn=None):
 
     return {"success": False, "error": "Timed out after ~5 min. Check JSON2Video Render logs."}
 def agent_video_renderer(script_data: dict) -> dict:
-    """Renders a script into a finished MP4 video using ElevenLabs (voice) + Revid.ai (visuals)."""
-    import requests as req_lib
-    import time
-
-    eleven_key = st.secrets.get("ELEVENLABS_API_KEY", "")
-    voice_id   = st.secrets.get("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
-    revid_key  = st.secrets.get("REVID_API_KEY", "")
-
-    if not eleven_key or not revid_key:
-        return {"success": False, "error": "Missing ELEVENLABS_API_KEY or REVID_API_KEY in Streamlit Secrets"}
-
+    """Renders a script into a finished MP4 via JSON2Video (voice + visuals + subtitles)."""
     script_text = script_data.get("script") or script_data.get("content", "")
     title       = script_data.get("title", "Untitled")
 
@@ -2845,117 +2835,15 @@ def agent_video_renderer(script_data: dict) -> dict:
         return {"success": False, "error": "No script text found"}
 
     add_log("videoRenderer", f"=== RENDERING: {title[:60]} ===")
+    result = render_ambient_short(script_text, add_log_fn=add_log)
 
-    # ── STEP 1: ElevenLabs voiceover ──
-    add_log("videoRenderer", "Step 1: Generating voiceover via ElevenLabs...")
-    try:
-        eleven_resp = req_lib.post(
-            f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
-            headers={"xi-api-key": eleven_key, "Content-Type": "application/json"},
-            json={
-                "text": script_text,
-                "model_id": "eleven_multilingual_v2",
-                "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}
-            },
-            timeout=120,
-        )
-        if eleven_resp.status_code != 200:
-            add_log("videoRenderer", f"✗ ElevenLabs error: {eleven_resp.text[:200]}")
-            return {"success": False, "error": f"ElevenLabs returned {eleven_resp.status_code}"}
-        audio_bytes = eleven_resp.content
-        add_log("videoRenderer", f"✓ Voiceover generated ({len(audio_bytes)} bytes)")
-    except Exception as e:
-        add_log("videoRenderer", f"✗ Voiceover exception: {str(e)[:200]}")
-        return {"success": False, "error": f"Voiceover failed: {str(e)[:200]}"}
-
-    # ── STEP 2: Submit to Revid.ai ──
-    add_log("videoRenderer", "Step 2: Submitting to Revid.ai for video rendering...")
-    try:
-        revid_payload = {
-            "creationParams": {
-                "mediaType": "movingImage",
-                "captionPositionName": "bottom_center",
-                "selectedAudio": "Smooth",
-                "inputText": script_text,
-                "flowType": "text-to-video",
-                "slug": "create-tiktok-video",
-                "isOptimizedForChinese": False,
-                "disableAudio": False,
-                "useAdvancedSettings": True,
-                "selectedVoice": "Rachel",
-                "captionPresetName": "Wrap 1",
-                "selectedLanguage": "English",
-                "sourceType": "contentScraping",
-                "selectedAudioUrl": None,
-                "videoStyle": "default",
-                "durationSeconds": None,
-                "aspectRatio": "9:16",
-                "websiteToScrape": None,
-                "selectedRatio": "9:16",
-                "secondsPerImage": 5,
-                "watermark": None,
-                "language": "en",
-                "voiceProvider": "elevenlabs",
-                "elevenLabsVoiceId": voice_id
-            }
+    if result.get("success"):
+        return {
+            "success":   True,
+            "video_url": result["url"],
+            "project_id": result.get("project", ""),
+            "title":     title,
         }
-        revid_resp = req_lib.post(
-            "https://www.revid.ai/api/public/v2/render",
-            headers={"key": revid_key, "Content-Type": "application/json"},
-            json=revid_payload,
-            timeout=60,
-        )
-        if revid_resp.status_code not in (200, 201):
-            add_log("videoRenderer", f"✗ Revid error: {revid_resp.text[:300]}")
-            return {"success": False, "error": f"Revid returned {revid_resp.status_code}: {revid_resp.text[:200]}"}
-        revid_data = revid_resp.json()
-        project_id = revid_data.get("pid") or revid_data.get("id") or revid_data.get("projectId", "")
-        add_log("videoRenderer", f"✓ Job submitted to Revid (ID: {project_id})")
-    except Exception as e:
-        add_log("videoRenderer", f"✗ Revid submit exception: {str(e)[:200]}")
-        return {"success": False, "error": f"Revid submission failed: {str(e)[:200]}"}
-
-    # ── STEP 3: Poll for completion ──
-    add_log("videoRenderer", "Step 3: Polling Revid.ai for completion (this takes 1-3 minutes)...")
-    max_attempts = 30
-    video_url = None
-    for attempt in range(1, max_attempts + 1):
-        time.sleep(10)
-        try:
-            status_resp = req_lib.get(
-                f"https://www.revid.ai/api/public/v2/status?pid={project_id}",
-                headers={"key": revid_key},
-                timeout=30,
-            )
-            if status_resp.status_code != 200:
-                add_log("videoRenderer", f"  Poll attempt {attempt}: status code {status_resp.status_code}")
-                continue
-            status_data = status_resp.json()
-            status = status_data.get("status", "").lower()
-            video_url = status_data.get("videoUrl") or status_data.get("video_url") or status_data.get("url")
-
-            if status in ("complete", "completed", "ready", "done", "success") and video_url:
-                add_log("videoRenderer", f"  ✓ Render complete on attempt {attempt}")
-                break
-            elif status in ("failed", "error"):
-                add_log("videoRenderer", f"  ✗ Revid render failed: {status_data}")
-                return {"success": False, "error": f"Render failed: {status_data.get('error', 'Unknown')}"}
-            else:
-                add_log("videoRenderer", f"  Attempt {attempt}/{max_attempts}: status={status}")
-        except Exception as e:
-            add_log("videoRenderer", f"  Poll exception: {str(e)[:100]}")
-
-    if not video_url:
-        return {"success": False, "error": f"Render timed out after {max_attempts * 10}s. Project ID: {project_id}"}
-
-    add_log("videoRenderer", f"=== VIDEO READY ===")
-    add_log("videoRenderer", f"Video URL: {video_url}")
-
-    return {
-        "success":     True,
-        "video_url":   video_url,
-        "project_id":  project_id,
-        "title":       title,
-    }
+    return {"success": False, "error": result.get("error", "Unknown render error")}
 PAGE_MAP["video_renderer"] = page_video_renderer
 PAGE_MAP.get(st.session_state.page, page_setup)()
