@@ -2613,28 +2613,37 @@ def page_video_renderer():
 
         if st.button("🧪 Test ElevenLabs Connection"):
             import requests as _req
-            with st.spinner("Testing authentication..."):
+            # Test 1: Authentication (/user)
+            with st.spinner("Test 1: Checking authentication..."):
                 try:
-                    r = _req.get(
-                        "https://api.elevenlabs.io/v1/user",
-                        headers={"xi-api-key": eleven_key},
-                        timeout=15,
-                    )
-                    if r.status_code == 200:
-                        data = r.json()
-                        sub = data.get("subscription", {})
-                        st.success("✅ AUTHENTICATION WORKS!")
-                        st.json({
-                            "tier": sub.get("tier", "unknown"),
-                            "character_count": sub.get("character_count", 0),
-                            "character_limit": sub.get("character_limit", 0),
-                            "status": sub.get("status", "unknown"),
-                        })
+                    r1 = _req.get("https://api.elevenlabs.io/v1/user",
+                                  headers={"xi-api-key": eleven_key}, timeout=15)
+                    if r1.status_code == 200:
+                        st.success("✅ Test 1: Authentication WORKS")
                     else:
-                        st.error(f"❌ Status {r.status_code}")
-                        st.code(r.text[:500])
+                        st.error(f"❌ Test 1: Auth failed — status {r1.status_code}")
+                        st.code(r1.text[:300])
                 except Exception as e:
-                    st.error(f"Exception: {str(e)[:200]}")
+                    st.error(f"Test 1 exception: {str(e)[:200]}")
+
+            # Test 2: Text-to-Speech (the ACTUAL operation that's failing)
+            with st.spinner("Test 2: Testing text-to-speech with your voice..."):
+                try:
+                    r2 = _req.post(
+                        f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+                        headers={"xi-api-key": eleven_key, "Content-Type": "application/json"},
+                        json={"text": "Test.", "model_id": "eleven_multilingual_v2"},
+                        timeout=30,
+                    )
+                    if r2.status_code == 200:
+                        st.success(f"✅ Test 2: TEXT-TO-SPEECH WORKS! ({len(r2.content)} bytes audio)")
+                        st.balloons()
+                    else:
+                        st.error(f"❌ Test 2: TTS failed — status {r2.status_code}")
+                        st.code(r2.text[:500])
+                        st.warning("This is the exact call your render uses. The error above tells us why.")
+                except Exception as e:
+                    st.error(f"Test 2 exception: {str(e)[:200]}")
     approved = [s for s in st.session_state.scripts if s.get("status") == "approved"]
     if not approved:
         st.info("No approved scripts yet. Approve scripts in Review & Approve first.")
