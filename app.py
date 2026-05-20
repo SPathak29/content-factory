@@ -481,9 +481,16 @@ def agent_refinement(scripts: list) -> list:
 Rewrite this short-form video script to fix these specific issues:
 {qa.get('refineInstructions', 'Strengthen hook, remove filler, sharpen CTA')}
 
-Remove these flagged phrases entirely: {', '.join(qa.get('flaggedPhrases', []))}
-Replace any em-dashes with commas.
-Remove all stage directions like [pause] or (beat).
+#1 PRIORITY — FABRICATED FACTS (brand-safety critical):
+These phrases were flagged and MUST be fixed: {', '.join(qa.get('flaggedPhrases', []))}
+For EACH flagged phrase containing a statistic, percentage, dollar figure, company action, or macro-claim:
+  - DELETE the specific number/claim entirely if the sentence works without it, OR
+  - Replace it with safe framing: "some report...", "it's possible...", "many people find...", "reportedly..."
+  - NEVER keep an unverified figure stated as fact. When unsure, CUT it.
+Do NOT invent a NEW stat to replace a deleted one. A clear claim with no number beats a fake number.
+After rewriting, re-read every sentence: if any number or factual claim could not be defended to a fact-checker, remove or hedge it.
+
+Also: Replace any em-dashes with commas. Remove all stage directions like [pause] or (beat).
 
 Keep: same topic, same affiliate mention, same product CTA, same emotional hook.
 CLARITY IS THE PRIORITY: rewrite so a distracted stranger understands the core idea on the FIRST listen. Use plain words a 12-year-old knows. Replace ALL jargon and abstract nouns with concrete, spoken language. Short sentences, one idea each. Stay calm and grounded, clear not hype.
