@@ -2910,6 +2910,7 @@ def agent_video_renderer(script_data: dict) -> dict:
         return {"success": False, "error": "No script text found"}
 
     add_log("videoRenderer", f"=== RENDERING: {title[:60]} ===")
+    st.warning(f"DEBUG: imagePrompts count = {len(script_data.get('imagePrompts', []))} | keys = {list(script_data.keys())}")
     result = render_ambient_short(script_text, add_log_fn=add_log, image_prompts=script_data.get("imagePrompts", []), model="flux-schnell")
 
     if result.get("success"):
