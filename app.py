@@ -2644,6 +2644,41 @@ def page_video_renderer():
                         st.warning("This is the exact call your render uses. The error above tells us why.")
                 except Exception as e:
                     st.error(f"Test 2 exception: {str(e)[:200]}")
+                    if st.button("🧪 Test JSON2Video Connection"):
+            import requests as _req
+            j2v_key = st.secrets.get("JSON2VIDEO_API_KEY", "")
+            if not j2v_key:
+                st.error("❌ JSON2VIDEO_API_KEY not found in secrets")
+            else:
+                st.info(f"Key found: {j2v_key[:6]}...{j2v_key[-4:]} (length {len(j2v_key)})")
+                with st.spinner("Submitting a tiny test render to JSON2Video..."):
+                    try:
+                        test_payload = {
+                            "resolution": "full-hd",
+                            "scenes": [{
+                                "elements": [
+                                    {"type": "text", "text": "mindfulAI test",
+                                     "settings": {"font-size": "60px", "color": "#c9a961"}},
+                                    {"type": "voice", "model": "elevenlabs",
+                                     "voice": "Rachel", "text": "Test."}
+                                ]
+                            }]
+                        }
+                        r = _req.post(
+                            "https://api.json2video.com/v2/movies",
+                            headers={"x-api-key": j2v_key, "Content-Type": "application/json"},
+                            json=test_payload, timeout=30,
+                        )
+                        if r.status_code in (200, 201):
+                            data = r.json()
+                            mid = data.get("project") or data.get("id") or data.get("movie_id") or str(data)[:200]
+                            st.success(f"✅ JSON2Video ACCEPTED the render! Movie/Project ID: {mid}")
+                            st.json(data)
+                        else:
+                            st.error(f"❌ Status {r.status_code}")
+                            st.code(r.text[:600])
+                    except Exception as e:
+                        st.error(f"Exception: {str(e)[:300]}")
     approved = [s for s in st.session_state.scripts if s.get("status") == "approved"]
     if not approved:
         st.info("No approved scripts yet. Approve scripts in Review & Approve first.")
