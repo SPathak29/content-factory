@@ -2722,7 +2722,110 @@ def page_video_renderer():
     # ──────────────────────────────────────────────────────────────────────────────
 # AGENT 10 — VIDEO RENDERER (ElevenLabs + Revid.ai)
 # ──────────────────────────────────────────────────────────────────────────────
+def render_ambient_short(script_text, add_log_fn=None):
+    """Render a vertical short via JSON2Video: navy gradient bg + Rachel voiceover + brand subtitles.
+    Returns dict: {success, url?, error?}"""
+    import requests as _req
+    import time as _time
 
+    def _log(msg):
+        if add_log_fn:
+            add_log_fn("videoRenderer", msg)
+
+    j2v_key = st.secrets.get("JSON2VIDEO_API_KEY", "")
+    if not j2v_key:
+        return {"success": False, "error": "JSON2VIDEO_API_KEY missing from secrets"}
+
+    # Clean the script: strip any stray scene labels / cues so subtitles read as narration
+    clean = " ".join(str(script_text).split())
+
+    payload = {
+        "resolution": "full-hd",
+        "quality": "high",
+        "width": 1080,
+        "height": 1920,
+        "scenes": [
+            {
+                "background-color": "#1a2332",
+                "elements": [
+                    {
+                        "type": "voice",
+                        "model": "elevenlabs",
+                        "voice": "Rachel",
+                        "text": clean
+                    },
+                    {
+                        "type": "subtitles",
+                        "settings": {
+                            "style": "highlight",
+                            "font-family": "Montserrat",
+                            "font-size": 64,
+                            "word-color": "#FFFFFF",
+                            "line-color": "#FFFFFF",
+                            "highlight-color": "#c9a961",
+                            "position": "center",
+                            "max-words-per-line": 3,
+                            "outline-width": 6,
+                            "outline-color": "#0d1520"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+    _log("Submitting render to JSON2Video...")
+    try:
+        r = _req.post(
+            "https://api.json2video.com/v2/movies",
+            headers={"x-api-key": j2v_key, "Content-Type": "application/json"},
+            json=payload, timeout=60,
+        )
+    except Exception as e:
+        return {"success": False, "error": f"Submit failed: {str(e)[:200]}"}
+
+    if r.status_code not in (200, 201):
+        return {"success": False, "error": f"JSON2Video submit {r.status_code}: {r.text[:300]}"}
+
+    submit = r.json()
+    project_id = submit.get("project")
+    if not project_id:
+        return {"success": False, "error": f"No project id in response: {str(submit)[:200]}"}
+
+    _log(f"Render accepted. Project ID: {project_id}. Polling for completion...")
+
+    # Poll for completion (up to ~5 minutes)
+    for attempt in range(30):
+        _time.sleep(10)
+        try:
+            poll = _req.get(
+                "https://api.json2video.com/v2/movies",
+                headers={"x-api-key": j2v_key},
+                params={"project": project_id}, timeout=30,
+            )
+        except Exception as e:
+            _log(f"Poll attempt {attempt+1} network error: {str(e)[:120]}")
+            continue
+
+        if poll.status_code != 200:
+            _log(f"Poll attempt {attempt+1}: status {poll.status_code}")
+            continue
+
+        pdata = poll.json()
+        movie = pdata.get("movie", pdata)
+        status = movie.get("status", "unknown")
+        _log(f"Poll {attempt+1}/30: status = {status}")
+
+        if status == "done":
+            url = movie.get("url")
+            if url:
+                _log(f"DONE. Video URL: {url}")
+                return {"success": True, "url": url, "project": project_id}
+            return {"success": False, "error": f"Status done but no URL: {str(movie)[:200]}"}
+        if status == "error":
+            return {"success": False, "error": f"Render error: {movie.get('message', str(movie)[:200])}"}
+
+    return {"success": False, "error": "Timed out after ~5 min. Check JSON2Video Render logs."}
 def agent_video_renderer(script_data: dict) -> dict:
     """Renders a script into a finished MP4 video using ElevenLabs (voice) + Revid.ai (visuals)."""
     import requests as req_lib
