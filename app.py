@@ -2644,7 +2644,7 @@ def page_video_renderer():
                         st.warning("This is the exact call your render uses. The error above tells us why.")
                 except Exception as e:
                     st.error(f"Test 2 exception: {str(e)[:200]}")
-                    if st.button("🧪 Test JSON2Video Connection"):
+        if st.button("🧪 Test JSON2Video Connection"):
             import requests as _req
             j2v_key = st.secrets.get("JSON2VIDEO_API_KEY", "")
             if not j2v_key:
@@ -2678,7 +2678,7 @@ def page_video_renderer():
                             st.error(f"❌ Status {r.status_code}")
                             st.code(r.text[:600])
                     except Exception as e:
-                        st.error(f"Exception: {str(e)[:300]}")
+                        st.error(f"Exception: {str(e)[:300]}")                
     approved = [s for s in st.session_state.scripts if s.get("status") == "approved"]
     if not approved:
         st.info("No approved scripts yet. Approve scripts in Review & Approve first.")
