@@ -2755,7 +2755,7 @@ def page_video_renderer():
                 if st.button("🎬 Render Video", type="primary", key=f"render_{i}", use_container_width=True):
                     with st.spinner(f"Rendering... 1-3 minutes."):
                         try:
-                            result = agent_video_renderer({"title": title, "script": script_text})
+                            result = agent_video_renderer({"title": title, "script": script_text, "imagePrompts": sc.get("imagePrompts", [])})
                             st.session_state.rendered_videos[i] = result
                             st.rerun()
                         except Exception as e:
