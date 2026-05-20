@@ -2740,7 +2740,7 @@ def render_ambient_short(script_text, add_log_fn=None):
     clean = " ".join(str(script_text).split())
 
     payload = {
-        "resolution": "full-hd",
+        "resolution": "custom",
         "quality": "high",
         "width": 1080,
         "height": 1920,
@@ -2753,23 +2753,27 @@ def render_ambient_short(script_text, add_log_fn=None):
                         "model": "elevenlabs",
                         "voice": "Rachel",
                         "text": clean
-                    },
-                    {
-                        "type": "subtitles",
-                        "settings": {
-                            "style": "highlight",
-                            "font-family": "Montserrat",
-                            "font-size": 64,
-                            "word-color": "#FFFFFF",
-                            "line-color": "#FFFFFF",
-                            "highlight-color": "#c9a961",
-                            "position": "center",
-                            "max-words-per-line": 3,
-                            "outline-width": 6,
-                            "outline-color": "#0d1520"
-                        }
                     }
                 ]
+            }
+        ],
+        "elements": [
+            {
+                "type": "subtitles",
+                "language": "en",
+                "settings": {
+                    "style": "classic-progressive",
+                    "font-family": "Montserrat",
+                    "font-size": 80,
+                    "font-weight": "700",
+                    "word-color": "#c9a961",
+                    "line-color": "#FFFFFF",
+                    "outline-color": "#0d1520",
+                    "outline-width": 8,
+                    "max-words-per-line": 3,
+                    "position": "center-center",
+                    "all-caps": False
+                }
             }
         ]
     }
