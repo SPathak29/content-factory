@@ -295,26 +295,23 @@ def agent_script_writer(trends: list, strategy: dict) -> list:
         aff    = sel.get("affiliateName", "")
         aff_angle = sel.get("affiliateAngle", "")
         is_tiktok = (s_type == "tiktok_monetized")
-        words  = "160-180 words (61+ seconds)" if is_tiktok else "130-140 words (exactly 45 seconds)"
+        words  = "165-185 words (kept over 60 seconds for TikTok Creator Rewards)" if is_tiktok else "90-110 words (about 35-40 seconds)"
 
         add_log("scriptWriter", f"Writing script {i+1}/3: [{s_type.upper()}] — '{trend.get('topic','')}'")
         feedback_ctx = get_feedback_context() if "get_feedback_context" in dir() else ""
 
         structure = (
-            "[HOOK 0-3s] Open with ONE plain, concrete sentence a stranger instantly understands. State the surprising idea directly, no abstract setup, no jargon. It must work whether spoken OR read on screen.\n"
-            "[STAKES 3-7s] One simple sentence: why this matters to them, in plain words.\n"
-            "[PAYLOAD 7-38s] 3 clear points, one idea each, plain spoken sentences. Concrete examples, no jargon, no filler.\n"
-            f"[AFFILIATE WEAVE 38-46s] Natural mention of {aff} — angle: {aff_angle}\n"
-            "[TWIST 46-54s] Final surprising insight — plant the rewatch trigger word here.\n"
-            f"[NEWSLETTER CTA 54-58s] '{nl_cta}' — direct them to bio link.\n"
-            f"[PRODUCT CTA 58-61s+] Seamless CTA to {product} at {gumroad}."
+            "[HOOK 0-4s] Open with ONE plain, concrete, surprising sentence a stranger instantly understands. No setup, no jargon. Works spoken OR on screen.\n"
+            "[ONE BIG IDEA 4-40s] Deliver ONE genuinely valuable realization, fully and clearly, with ONE concrete true example explored with room to breathe. Calm, deliberate pacing. Depth on one idea, NOT a list of steps or a full how-to.\n"
+            "[TEASE 40-52s] Signal there's a complete step-by-step system behind this, and the full version lives in the free guide. Build real curiosity, don't give it all away.\n"
+            f"[CTA 52-62s+] Calm, direct CTA to the free guide ({product}) at {gumroad}. One concrete reason to grab it.\n"
+            f"(A light, honest mention of {aff} is OK only if it fits naturally. The single idea comes first. Keep total over 60 seconds.)"
         ) if is_tiktok else (
-            "[HOOK 0-3s] Open with ONE plain, concrete sentence a stranger instantly understands, the surprising idea stated directly, no abstract setup, no jargon. Works spoken OR read on screen.\n"
-            "[STAKES 3-6s] One simple sentence: why this matters to them, plainly.\n"
-            "[PAYLOAD 6-32s] 3 clear points, one idea each, plain spoken sentences. Concrete, no filler.\n"
-            f"[AFFILIATE WEAVE 32-38s] Natural mention of {aff} — {aff_angle}\n"
-            "[TWIST 38-42s] Final surprising insight — plant rewatch trigger.\n"
-            f"[PRODUCT CTA 42-45s] Seamless bio link CTA for {product}."
+            "[HOOK 0-4s] Open with ONE plain, concrete, surprising sentence a stranger instantly understands. No setup, no jargon. Works spoken OR on screen.\n"
+            "[ONE BIG IDEA 4-25s] Deliver ONE genuinely valuable realization, fully and clearly, with a concrete true example. Calm, deliberate. Depth on one idea, NOT multiple steps or a how-to dump.\n"
+            "[TEASE 25-32s] Signal there's a full step-by-step system, complete version in the free guide. Build curiosity, don't give it all away.\n"
+            f"[CTA 32-40s] Calm, direct CTA to the free guide ({product}) at {gumroad}. One concrete reason to grab it.\n"
+            f"(A light, honest mention of {aff} only if it fits naturally. The single idea comes first.)"
         )
 
         raw = call_claude([{"role": "user", "content": f"""
@@ -354,7 +351,13 @@ CRITICAL SCRIPT RULES:
 3. Use natural contractions (you're, that's, it's) — sounds human when spoken
 4. Affiliate mention must feel like a genuine recommendation, not an ad
 5. Emotional register: {trend.get('emotionalHook','curiosity').upper()} throughout
-6. Hit word target EXACTLY — count before returning
+6. Hit the WORD TARGET stated above EXACTLY — count before returning. Shorter and sharper beats longer.
+7. ZERO FABRICATED FACTS — this is non-negotiable and a brand-safety requirement:
+   - NEVER invent specific statistics, percentages, dollar amounts, rankings, or macro-claims to sound authoritative (e.g. "38% of creator income", "the #1 fastest-growing", "earns more than your doctor"). These are hallucinations and a platform-compliance + trust risk.
+   - Any number or claim MUST be either universally defensible OR safely framed: "some creators report...", "it's possible to...", "many people find...", "this can...". Never state an unverified figure as flat fact.
+   - Concrete examples must be STRUCTURALLY TRUE (a realistic, plausible scenario), never a fabricated specific outcome presented as real data.
+   - When in doubt, drop the number entirely. A clear claim with no fake stat beats a punchy claim built on a hallucination.
+8. CALM, CONSIDERED CADENCE: write for a slow, deliberate spoken delivery. Short sentences with natural pauses. Confident and quiet, never hype, never shouty, no fake urgency.
 
 Return ONLY valid JSON (no markdown fence, no preamble):
 {{
@@ -427,7 +430,7 @@ Check ALL of the following and score each 1-10:
 1. hookScore: Does the FIRST sentence state a clear, concrete idea a stranger grasps instantly? (Penalize abstract or jargon-heavy openings.)
 2. retentionScore: Does the body deliver genuine value rapidly? No filler?
 3. ctaScore: Is the call-to-action natural and compelling?
-4. factScore: Are all claims either verifiable or clearly framed as opinion?
+4. factScore: Are ALL claims either universally defensible, clearly framed as opinion/possibility ("some report", "it's possible"), or structurally-true examples? Score LOW (1-4) for ANY invented statistic, percentage, dollar figure, or macro-claim stated as fact. Fabricated authority-stats are the most serious failure — penalize hard.
 5. clarityScore: FIRST-LISTEN TEST. Could a distracted stranger understand the core idea on ONE listen, at speed, with no rewind? Score 1-10. Penalize: jargon, buzzwords, abstract nouns, long sentences, more than one core idea, anything needing a second listen.
 6. overallScore: Average of all five above, MINUS 1 if word count is wrong, MINUS 1 if flaggedPhrases found
 
@@ -438,7 +441,7 @@ Also check for:
 - Unverifiable absolute claims ("always", "100%", "never fails")
 - JARGON / buzzwords / abstract nouns that hurt first-listen clarity (e.g. "leverage", "ecosystem", "synergy", "paradigm", "framework", "optimize", "asymmetric", "scale your", "unlock") — flag any that a normal person wouldn't say out loud
 
-Set autoRefine=true if overallScore < 7 OR clarityScore < 8 OR any flaggedPhrases found.
+Set autoRefine=true if overallScore < 7 OR clarityScore < 8 OR factScore < 8 OR any flaggedPhrases found.
 
 Return ONLY valid JSON:
 {{
