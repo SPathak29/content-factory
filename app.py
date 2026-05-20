@@ -2763,9 +2763,9 @@ def page_video_renderer():
     # ──────────────────────────────────────────────────────────────────────────────
 # AGENT 10 — VIDEO RENDERER (ElevenLabs + Revid.ai)
 # ──────────────────────────────────────────────────────────────────────────────
-def render_ambient_short(script_text, add_log_fn=None):
-    """Render a vertical short via JSON2Video: navy gradient bg + Rachel voiceover + brand subtitles.
-    Returns dict: {success, url?, error?}"""
+def render_ambient_short(script_text, add_log_fn=None, image_prompts=None, model="flux-schnell"):
+    """Render a vertical short via JSON2Video: scene-matched AI images (flux) with Ken Burns
+    motion + full Rachel voiceover + gold kinetic captions. Returns {success, url?, error?}."""
     import requests as _req
     import time as _time
 
@@ -2777,49 +2777,80 @@ def render_ambient_short(script_text, add_log_fn=None):
     if not j2v_key:
         return {"success": False, "error": "JSON2VIDEO_API_KEY missing from secrets"}
 
-    # Clean the script: strip any stray scene labels / cues so subtitles read as narration
     clean = " ".join(str(script_text).split())
+
+    prompts = [p for p in (image_prompts or []) if isinstance(p, str) and len(p.strip()) > 10]
+    if not prompts:
+        _log("No image prompts found — falling back to navy background.")
+        prompts = []
+
+    word_n = len(clean.split())
+    est_seconds = max(20, round(word_n / 2.5))
+    n = len(prompts)
+    per_scene = round(est_seconds / n, 1) if n > 0 else est_seconds
+    _log(f"Script ~{word_n} words, est {est_seconds}s, {n} image scenes @ ~{per_scene}s each.")
+
+    pans = ["right", "left", "top", "bottom", "top-right", "bottom-left"]
+    scenes = []
+    if prompts:
+        for i, p in enumerate(prompts):
+            scenes.append({
+                "duration": per_scene,
+                "elements": [
+                    {
+                        "type": "image",
+                        "model": model,
+                        "prompt": p,
+                        "aspect-ratio": "vertical",
+                        "resize": "cover",
+                        "zoom": 2 if i % 2 == 0 else -2,
+                        "pan": pans[i % len(pans)],
+                        "pan-distance": 0.12
+                    }
+                ]
+            })
+    else:
+        scenes.append({
+            "duration": est_seconds,
+            "background-color": "#1a2332",
+            "elements": []
+        })
 
     payload = {
         "resolution": "custom",
         "quality": "high",
         "width": 1080,
         "height": 1920,
-        "scenes": [
-            {
-                "background-color": "#1a2332",
-                "elements": [
-                    {
-                        "type": "voice",
-                        "model": "elevenlabs",
-                        "voice": "Rachel",
-                        "text": clean
-                    }
-                ]
-            }
-        ],
+        "scenes": scenes,
         "elements": [
+            {
+                "type": "voice",
+                "model": "elevenlabs",
+                "voice": "Rachel",
+                "text": clean,
+                "start": 0
+            },
             {
                 "type": "subtitles",
                 "language": "en",
                 "settings": {
                     "style": "classic-progressive",
                     "font-family": "Montserrat",
-                    "font-size": 80,
+                    "font-size": 90,
                     "font-weight": "700",
                     "word-color": "#c9a961",
                     "line-color": "#FFFFFF",
                     "outline-color": "#0d1520",
                     "outline-width": 8,
                     "max-words-per-line": 3,
-                    "position": "center-center",
+                    "position": "mid-bottom-center",
                     "all-caps": False
                 }
             }
         ]
     }
 
-    _log("Submitting render to JSON2Video...")
+    _log(f"Submitting render to JSON2Video (model: {model})...")
     try:
         r = _req.post(
             "https://api.json2video.com/v2/movies",
@@ -2830,17 +2861,16 @@ def render_ambient_short(script_text, add_log_fn=None):
         return {"success": False, "error": f"Submit failed: {str(e)[:200]}"}
 
     if r.status_code not in (200, 201):
-        return {"success": False, "error": f"JSON2Video submit {r.status_code}: {r.text[:300]}"}
+        return {"success": False, "error": f"JSON2Video submit {r.status_code}: {r.text[:400]}"}
 
     submit = r.json()
     project_id = submit.get("project")
     if not project_id:
         return {"success": False, "error": f"No project id in response: {str(submit)[:200]}"}
 
-    _log(f"Render accepted. Project ID: {project_id}. Polling for completion...")
+    _log(f"Render accepted. Project ID: {project_id}. Polling (AI images take longer)...")
 
-    # Poll for completion (up to ~5 minutes)
-    for attempt in range(30):
+    for attempt in range(48):
         _time.sleep(10)
         try:
             poll = _req.get(
@@ -2849,17 +2879,17 @@ def render_ambient_short(script_text, add_log_fn=None):
                 params={"project": project_id}, timeout=30,
             )
         except Exception as e:
-            _log(f"Poll attempt {attempt+1} network error: {str(e)[:120]}")
+            _log(f"Poll {attempt+1} network error: {str(e)[:120]}")
             continue
 
         if poll.status_code != 200:
-            _log(f"Poll attempt {attempt+1}: status {poll.status_code}")
+            _log(f"Poll {attempt+1}: status {poll.status_code}")
             continue
 
         pdata = poll.json()
         movie = pdata.get("movie", pdata)
         status = movie.get("status", "unknown")
-        _log(f"Poll {attempt+1}/30: status = {status}")
+        _log(f"Poll {attempt+1}/48: status = {status}")
 
         if status == "done":
             url = movie.get("url")
@@ -2868,9 +2898,9 @@ def render_ambient_short(script_text, add_log_fn=None):
                 return {"success": True, "url": url, "project": project_id}
             return {"success": False, "error": f"Status done but no URL: {str(movie)[:200]}"}
         if status == "error":
-            return {"success": False, "error": f"Render error: {movie.get('message', str(movie)[:200])}"}
+            return {"success": False, "error": f"Render error: {movie.get('message', str(movie)[:300])}"}
 
-    return {"success": False, "error": "Timed out after ~5 min. Check JSON2Video Render logs."}
+    return {"success": False, "error": "Timed out after ~8 min. Check JSON2Video Render logs."}
 def agent_video_renderer(script_data: dict) -> dict:
     """Renders a script into a finished MP4 via JSON2Video (voice + visuals + subtitles)."""
     script_text = script_data.get("script") or script_data.get("content", "")
@@ -2880,7 +2910,7 @@ def agent_video_renderer(script_data: dict) -> dict:
         return {"success": False, "error": "No script text found"}
 
     add_log("videoRenderer", f"=== RENDERING: {title[:60]} ===")
-    result = render_ambient_short(script_text, add_log_fn=add_log)
+    result = render_ambient_short(script_text, add_log_fn=add_log, image_prompts=script_data.get("imagePrompts", []), model="flux-schnell")
 
     if result.get("success"):
         return {
