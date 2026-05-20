@@ -344,7 +344,13 @@ PLATFORM: {platform}
 
 STRUCTURE TO FOLLOW:
 {structure}
-
+IMAGE PROMPTS (for AI-generated visuals — VERY IMPORTANT):
+Produce 5 to 7 'imagePrompts' — one rich image-generation prompt per beat of the script, in script order, each visually matching what's being said at that moment.
+- Each describes ONE concrete, literal scene (a person, object, place, or action a stranger instantly recognizes) illustrating that part of the narration.
+- Aesthetic for ALL prompts: calm, premium, cinematic. Deep navy tones (#1a2332) with warm gold (#c9a961) accent lighting. Considered, NOT flashy or hype. Vertical 9:16. Photographic and realistic, high quality.
+- NO text, words, letters, logos, or watermarks in any image (captions are added separately).
+- Be specific and visual: "a person at a desk at dawn, soft gold light through a window, laptop glowing, calm and focused" — NOT vague like "success" or "money".
+- Aim for 5-7 prompts matching the script's natural beats.
 CRITICAL SCRIPT RULES:
 1. Zero copyrighted phrases. Zero "as I always say", "Let's dive in", "Without further ado", "In today's video"
 2. ElevenLabs-optimised: perfect punctuation, NO em-dashes (use commas), NO stage directions like [pause]
@@ -379,6 +385,13 @@ Return ONLY valid JSON (no markdown fence, no preamble):
   "affiliateCommission": "{sel.get('affiliateCommission','')}",
   "script": "FULL WORD-FOR-WORD SCRIPT HERE — every word counts",
   "abHookVariant": "Alternative opening sentence for A/B testing",
+  "imagePrompts": [
+    "Rich cinematic image-generation prompt for the HOOK moment — a concrete scene matching the opening line, calm premium style, deep navy (#1a2332) and warm gold (#c9a961) tones, vertical 9:16, photographic, no text in image",
+    "Image prompt for the core idea — concrete scene matching the main point, same navy/gold cinematic aesthetic, vertical, no text",
+    "Image prompt for the example/detail beat — concrete supporting visual, same aesthetic, vertical, no text",
+    "Image prompt for the tease beat — visual suggesting there's a bigger system, same aesthetic, vertical, no text",
+    "Image prompt for the CTA close — calm aspirational visual, same navy/gold aesthetic, vertical, no text"
+  ],
   "broll": [
     {{"timestamp":"0-3s","footage":"free stock search term for Pexels/Pixabay","overlay":"TEXT OVERLAY","transition":"cut"}},
     {{"timestamp":"3-8s","footage":"","overlay":"","transition":"zoom"}},
