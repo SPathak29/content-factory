@@ -387,17 +387,7 @@ Return ONLY valid JSON (no markdown fence, no preamble):
   "capcutScenes": [
     {{"scene": 1, "seconds": "0-3s", "role": "HOOK", "spoken": "Calm natural narration for this scene.", "onScreenText": "PUNCH", "footageKeywords": "dark minimal desk, slow push shadow, gold light", "editNote": "scroll-stopper"}},
     {{"scene": 2, "seconds": "3-7s", "role": "BODY", "spoken": "Next line.", "onScreenText": "PHRASE", "footageKeywords": "term one, term two, term three", "editNote": "note"}}
-  ],
-  "broll": [
-    {{"timestamp":"0-3s","footage":"free stock search term for Pexels/Pixabay","overlay":"TEXT OVERLAY","transition":"cut"}},
-    {{"timestamp":"3-8s","footage":"","overlay":"","transition":"zoom"}},
-    {{"timestamp":"8-30s","footage":"","overlay":"","transition":"cut"}},
-    {{"timestamp":"30-46s","footage":"","overlay":"","transition":"swipe"}},
-    {{"timestamp":"46-{"61" if is_tiktok else "45"}s","footage":"","overlay":"","transition":"fade"}}
-  ],
-  "thumbnailConcept": "vivid visual description for designer",
-  "midjourneyPrompt": "complete generative prompt ready to paste --ar 9:16 --v 6 --style raw --q 2",
-  "musicMood": "Epidemic Sound search: [genre] [mood] [BPM range]"
+  ]
 }}
 """}])
 
