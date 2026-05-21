@@ -251,17 +251,15 @@ NICHE: {niche}
 AFFILIATES AVAILABLE: {json.dumps(affiliates, indent=2)}
 
 Rules:
-- Select indices for the 3 best trends (use 0, 1, 2 if unsure)
-- Script 0 & 1 = short_retention (45s, 130-140 words)
-- Script 2 = tiktok_monetized (61s+, 160-180 words, narrative-driven)
+- Select indices for the 2 best trends (use 0, 1 if unsure)
+- Both scripts = short_retention (ultra-short, 75-90 words, conversational)
 - For each script, pick the most naturally fitting affiliate from the list
 - Assign a realistic posting slot (Day HH:MM)
 
 Return ONLY JSON:
 {{"selections":[
   {{"trendIndex":0,"scriptType":"short_retention","affiliateName":"","affiliateCommission":"","affiliateAngle":"one sentence on natural mention","postingSlot":"Monday 08:00"}},
-  {{"trendIndex":1,"scriptType":"short_retention","affiliateName":"","affiliateCommission":"","affiliateAngle":"","postingSlot":"Monday 12:00"}},
-  {{"trendIndex":2,"scriptType":"tiktok_monetized","affiliateName":"","affiliateCommission":"","affiliateAngle":"","postingSlot":"Monday 19:30"}}
+  {{"trendIndex":1,"scriptType":"short_retention","affiliateName":"","affiliateCommission":"","affiliateAngle":"","postingSlot":"Tuesday 08:00"}}
 ]}}
 """}])
     strategy = extract_json(raw)
@@ -269,10 +267,10 @@ Return ONLY JSON:
         strategy = {"selections": strategy}
     strategy = strategy or {
         "selections": [
-            {"trendIndex": i, "scriptType": "tiktok_monetized" if i == 2 else "short_retention",
+            {"trendIndex": i, "scriptType": "short_retention",
              "affiliateName": "", "affiliateCommission": "", "affiliateAngle": "",
-             "postingSlot": ["Monday 08:00", "Monday 12:00", "Monday 19:30"][i]}
-            for i in range(3)
+             "postingSlot": ["Monday 08:00", "Tuesday 08:00"][i]}
+            for i in range(2)
         ]
     }
     for i, sel in enumerate(strategy.get("selections", [])):
@@ -1011,6 +1009,36 @@ def page_approval():
                 st.caption(f"{wc} words · {sc.get('estimatedDuration','45s')} · Posting: {sc.get('postingSlot','')}")
                 if sc.get("abHookVariant"):
                     st.caption(f"A/B hook: *\"{sc['abHookVariant']}\"*")
+                # ---- CapCut Production Brief ----
+                scenes = sc.get("capcutScenes", [])
+                if scenes:
+                    st.markdown("---")
+                    st.markdown("**🎬 CapCut Production Brief**")
+                    for scn in scenes:
+                        st.markdown(
+                            f"**Scene {scn.get('scene','')}** · `{scn.get('seconds','')}` · _{scn.get('role','')}_"
+                        )
+                        st.markdown(f"🗣️ **Spoken:** {scn.get('spoken','')}")
+                        st.markdown(f"💥 **On-screen:** `{scn.get('onScreenText','')}`")
+                        kws = scn.get("footageKeywords", [])
+                        st.markdown(f"🎞️ **Footage:** {', '.join(kws) if kws else '—'}")
+                        if scn.get("editNote"):
+                            st.caption(f"✂️ {scn['editNote']}")
+                        st.markdown("")
+                    # Copy-everything block
+                    full_brief = f"=== {sc.get('topicTitle','Script')} ===\n\n"
+                    full_brief += "FULL SPOKEN NARRATION (paste into CapCut TTS):\n"
+                    full_brief += " ".join(s.get("spoken","") for s in scenes) + "\n\n"
+                    full_brief += "SCENE-BY-SCENE:\n"
+                    for s in scenes:
+                        full_brief += f"\n[Scene {s.get('scene','')} | {s.get('seconds','')} | {s.get('role','')}]\n"
+                        full_brief += f"Spoken: {s.get('spoken','')}\n"
+                        full_brief += f"On-screen text: {s.get('onScreenText','')}\n"
+                        full_brief += f"Footage search: {', '.join(s.get('footageKeywords',[]))}\n"
+                        if s.get("editNote"):
+                            full_brief += f"Note: {s['editNote']}\n"
+                    with st.expander("📋 Copy full brief (for CapCut)"):
+                        st.code(full_brief, language=None)        
             with c2:
                 st.markdown("**YouTube Shorts**")
                 st.code(f"{sc.get('youtubeTitle','')}\nTags: {', '.join(sc.get('youtubeTags',[]))}", language=None)
