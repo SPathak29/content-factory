@@ -345,12 +345,12 @@ PLATFORM: {platform}
 STRUCTURE TO FOLLOW:
 {structure}
 IMAGE PROMPTS (for AI-generated visuals — VERY IMPORTANT):
-Produce 5 to 7 'imagePrompts' — one rich image-generation prompt per beat of the script, in script order, each visually matching what's being said at that moment.
+Produce 18 to 22 'imagePrompts' — one rich image-generation prompt for roughly every 2-3 seconds of narration, in script order, each visually matching what's being said at that exact moment. Many short, fast-changing visuals (NOT a few long ones) — the rapid visual change is what holds attention.
 - Each describes ONE concrete, literal scene (a person, object, place, or action a stranger instantly recognizes) illustrating that part of the narration.
 - Aesthetic for ALL prompts: calm, premium, cinematic. Deep navy tones (#1a2332) with warm gold (#c9a961) accent lighting. Considered, NOT flashy or hype. Vertical 9:16. Photographic and realistic, high quality.
 - NO text, words, letters, logos, or watermarks in any image (captions are added separately).
 - Be specific and visual: "a person at a desk at dawn, soft gold light through a window, laptop glowing, calm and focused" — NOT vague like "success" or "money".
-- Aim for 5-7 prompts matching the script's natural beats.
+- Aim for 18-22 prompts. Each covers only ~2-3 seconds, so break the script into many small visual moments. Consecutive prompts can show the same scene from different angles or progress an action, to keep it coherent while still changing rapidly.
 CRITICAL SCRIPT RULES:
 1. Zero copyrighted phrases. Zero "as I always say", "Let's dive in", "Without further ado", "In today's video"
 2. ElevenLabs-optimised: perfect punctuation, NO em-dashes (use commas), NO stage directions like [pause]
@@ -386,11 +386,11 @@ Return ONLY valid JSON (no markdown fence, no preamble):
   "script": "FULL WORD-FOR-WORD SCRIPT HERE — every word counts",
   "abHookVariant": "Alternative opening sentence for A/B testing",
   "imagePrompts": [
-    "Rich cinematic image-generation prompt for the HOOK moment — a concrete scene matching the opening line, calm premium style, deep navy (#1a2332) and warm gold (#c9a961) tones, vertical 9:16, photographic, no text in image",
-    "Image prompt for the core idea — concrete scene matching the main point, same navy/gold cinematic aesthetic, vertical, no text",
-    "Image prompt for the example/detail beat — concrete supporting visual, same aesthetic, vertical, no text",
-    "Image prompt for the tease beat — visual suggesting there's a bigger system, same aesthetic, vertical, no text",
-    "Image prompt for the CTA close — calm aspirational visual, same navy/gold aesthetic, vertical, no text"
+    "Prompt 1 — HOOK visual, concrete scene matching opening words, navy (#1a2332)/gold (#c9a961) cinematic, vertical 9:16, photographic, no text",
+    "Prompt 2 — next ~2-3s beat, concrete, same aesthetic, vertical, no text",
+    "Prompt 3 — next beat, same aesthetic, vertical, no text",
+    "Prompt 4 — next beat, same aesthetic, vertical, no text",
+    "...continue producing 18-22 prompts total, one per ~2-3 seconds of narration, in order, each a concrete literal scene matching that moment, all navy/gold cinematic vertical photographic with no text..."
   ],
   "broll": [
     {{"timestamp":"0-3s","footage":"free stock search term for Pexels/Pixabay","overlay":"TEXT OVERLAY","transition":"cut"}},
@@ -2803,9 +2803,9 @@ def render_ambient_short(script_text, add_log_fn=None, image_prompts=None, model
                         "prompt": p,
                         "aspect-ratio": "vertical",
                         "resize": "cover",
-                        "zoom": 2 if i % 2 == 0 else -2,
+                        "zoom": 4 if i % 2 == 0 else -4,
                         "pan": pans[i % len(pans)],
-                        "pan-distance": 0.12
+                        "pan-distance": 0.2
                     }
                 ]
             })
@@ -2911,7 +2911,7 @@ def agent_video_renderer(script_data: dict) -> dict:
 
     add_log("videoRenderer", f"=== RENDERING: {title[:60]} ===")
     st.warning(f"DEBUG: imagePrompts count = {len(script_data.get('imagePrompts', []))} | keys = {list(script_data.keys())}")
-    result = render_ambient_short(script_text, add_log_fn=add_log, image_prompts=script_data.get("imagePrompts", []), model="flux-pro")
+    result = render_ambient_short(script_text, add_log_fn=add_log, image_prompts=script_data.get("imagePrompts", []), model="flux-schnell")
 
     if result.get("success"):
         return {
