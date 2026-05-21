@@ -386,11 +386,9 @@ Return ONLY valid JSON (no markdown fence, no preamble):
   "script": "FULL WORD-FOR-WORD SCRIPT HERE — every word counts",
   "abHookVariant": "Alternative opening sentence for A/B testing",
   "imagePrompts": [
-    "Prompt 1 — HOOK visual, concrete scene matching opening words, navy (#1a2332)/gold (#c9a961) cinematic, vertical 9:16, photographic, no text",
-    "Prompt 2 — next ~2-3s beat, concrete, same aesthetic, vertical, no text",
-    "Prompt 3 — next beat, same aesthetic, vertical, no text",
-    "Prompt 4 — next beat, same aesthetic, vertical, no text",
-    "...continue producing 18-22 prompts total, one per ~2-3 seconds of narration, in order, each a concrete literal scene matching that moment, all navy/gold cinematic vertical photographic with no text..."
+    "HOOK visual — concrete scene matching the opening words, navy (#1a2332) and gold (#c9a961) cinematic, vertical 9:16, photographic, no text",
+    "beat 2 — concrete scene matching the next moment, same aesthetic, vertical, no text",
+    "beat 3 — concrete scene matching the next moment, same aesthetic, vertical, no text"
   ],
   "broll": [
     {{"timestamp":"0-3s","footage":"free stock search term for Pexels/Pixabay","overlay":"TEXT OVERLAY","transition":"cut"}},
