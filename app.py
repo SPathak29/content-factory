@@ -295,23 +295,21 @@ def agent_script_writer(trends: list, strategy: dict) -> list:
         aff    = sel.get("affiliateName", "")
         aff_angle = sel.get("affiliateAngle", "")
         is_tiktok = (s_type == "tiktok_monetized")
-        words  = "165-185 words (kept over 60 seconds for TikTok Creator Rewards)" if is_tiktok else "90-110 words (about 35-40 seconds)"
+        words  = "75-90 words MAX — ultra-short, conversational, one hook + one realization + curiosity CTA. Reads like a human speaking with dramatic pauses, NOT an essay."
 
         add_log("scriptWriter", f"Writing script {i+1}/3: [{s_type.upper()}] — '{trend.get('topic','')}'")
         feedback_ctx = get_feedback_context() if "get_feedback_context" in dir() else ""
 
         structure = (
-            "[HOOK 0-4s] Open with ONE plain, concrete, surprising sentence a stranger instantly understands. No setup, no jargon. Works spoken OR on screen.\n"
-            "[ONE BIG IDEA 4-40s] Deliver ONE genuinely valuable realization, fully and clearly, with ONE concrete true example explored with room to breathe. Calm, deliberate pacing. Depth on one idea, NOT a list of steps or a full how-to.\n"
-            "[TEASE 40-52s] Signal there's a complete step-by-step system behind this, and the full version lives in the free guide. Build real curiosity, don't give it all away.\n"
-            f"[CTA 52-62s+] Calm, direct CTA to the free guide ({product}) at {gumroad}. One concrete reason to grab it.\n"
-            f"(A light, honest mention of {aff} is OK only if it fits naturally. The single idea comes first. Keep total over 60 seconds.)"
+            "[HOOK 0-5s] ONE short, contrarian, spoken-aloud sentence that stops a scroll. Sounds like a real person talking to a friend, NOT an essay. Make them NEED the next line.\n"
+            "[ONE REALIZATION 5-25s] Deliver a SINGLE surprising realization, conversationally, with natural rhythm. Short sentences. Wide dramatic pauses (use a new line or '...' for a beat). Do NOT teach a workflow or list steps. One idea, said like a human, that makes them rethink something.\n"
+            "[CURIOSITY CTA 25-40s] Calmly point them to the free prompt vault for the rest. Tease, don't explain. 'I put the exact prompts in a free vault, link's right there.' Make them curious, not sold-to.\n"
+            "TOTAL: 75-90 words MAX. Conversational. Lots of white space and pauses. If it sounds like an article, rewrite it until it sounds like a person talking."
         ) if is_tiktok else (
-            "[HOOK 0-4s] Open with ONE plain, concrete, surprising sentence a stranger instantly understands. No setup, no jargon. Works spoken OR on screen.\n"
-            "[ONE BIG IDEA 4-25s] Deliver ONE genuinely valuable realization, fully and clearly, with a concrete true example. Calm, deliberate. Depth on one idea, NOT multiple steps or a how-to dump.\n"
-            "[TEASE 25-32s] Signal there's a full step-by-step system, complete version in the free guide. Build curiosity, don't give it all away.\n"
-            f"[CTA 32-40s] Calm, direct CTA to the free guide ({product}) at {gumroad}. One concrete reason to grab it.\n"
-            f"(A light, honest mention of {aff} only if it fits naturally. The single idea comes first.)"
+            "[HOOK 0-5s] ONE short, contrarian, spoken-aloud sentence that stops a scroll. Sounds like a real person talking to a friend, NOT an essay. Make them NEED the next line.\n"
+            "[ONE REALIZATION 5-25s] Deliver a SINGLE surprising realization, conversationally, with natural rhythm. Short sentences. Wide dramatic pauses (use a new line or '...' for a beat). Do NOT teach a workflow or list steps. One idea, said like a human, that makes them rethink something.\n"
+            "[CURIOSITY CTA 25-40s] Calmly point them to the free prompt vault for the rest. Tease, don't explain. 'I put the exact prompts in a free vault, link's right there.' Make them curious, not sold-to.\n"
+            "TOTAL: 75-90 words MAX. Conversational. Lots of white space and pauses. If it sounds like an article, rewrite it until it sounds like a person talking."
         )
 
         raw = call_claude([{"role": "user", "content": f"""
@@ -348,8 +346,9 @@ IMAGE PROMPTS (for AI-generated visuals — VERY IMPORTANT):
 Produce 12 to 15 'imagePrompts' — one SHORT prompt of 8-15 words each (NOT long descriptions) for roughly every 3-4 seconds of narration, in script order, matching what's said at that moment. Keep each prompt brief so they all fit. Many fast-changing visuals hold attention.
 - Each describes ONE concrete, literal scene (a person, object, place, or action a stranger instantly recognizes) illustrating that part of the narration.
 - Aesthetic (apply to all, no need to repeat in each prompt): calm cinematic, navy (#1a2332) + gold (#c9a961), vertical 9:16, photographic. Keep each individual prompt SHORT — just name the concrete scene.
-- NO text, words, letters, logos, or watermarks in any image (captions are added separately).
-- Be specific and visual: "a person at a desk at dawn, soft gold light through a window, laptop glowing, calm and focused" — NOT vague like "success" or "money".
+- ABSOLUTELY FORBIDDEN: never describe screens, interfaces, monitors, phones, laptops-with-visible-screens, charts, websites, dashboards, search bars, or analytics graphs. AI image models CANNOT render text and produce glitched gibberish. Zero exceptions.
+- INSTEAD use cinematic, atmospheric, human-centric visual METAPHORS in navy/gold: e.g. "hands on a dark premium keyboard under a single warm desk lamp", "a golden compass turning slowly on dark marble", "steam rising from coffee in a dim gold-lit room", "a person silhouetted at a window at dawn", "warm light spreading across an empty desk". Concrete and filmable, but NO text or screens.
+- Be specific and visual: "a person silhouetted at a window at dawn, warm gold light, calm and still" — NOT vague like "success" or "money", and NOT a screen/laptop/phone.
 - Aim for 12-15 prompts. Each covers ~3-4 seconds, so break the script into many small visual moments. Consecutive prompts can show the same scene from different angles or progress an action, to stay coherent while changing often.
 CRITICAL SCRIPT RULES:
 1. Zero copyrighted phrases. Zero "as I always say", "Let's dive in", "Without further ado", "In today's video"
@@ -363,7 +362,7 @@ CRITICAL SCRIPT RULES:
    - Any number or claim MUST be either universally defensible OR safely framed: "some creators report...", "it's possible to...", "many people find...", "this can...". Never state an unverified figure as flat fact.
    - Concrete examples must be STRUCTURALLY TRUE (a realistic, plausible scenario), never a fabricated specific outcome presented as real data.
    - When in doubt, drop the number entirely. A clear claim with no fake stat beats a punchy claim built on a hallucination.
-8. CALM, CONSIDERED CADENCE: write for a slow, deliberate spoken delivery. Short sentences with natural pauses. Confident and quiet, never hype, never shouty, no fake urgency.
+8. SOUND LIKE A REAL PERSON TALKING, not an AI essay. Conversational, like telling one friend something interesting. Short punchy sentences. Wide dramatic pauses (new lines / '...'). Drop information density HARD — one idea, said well, beats five ideas crammed in. If a sentence sounds written rather than spoken, rewrite it. Calm and confident, never hype.
 
 Return ONLY valid JSON (no markdown fence, no preamble):
 {{
