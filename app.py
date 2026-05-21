@@ -341,7 +341,7 @@ PLATFORM: {platform}
 STRUCTURE TO FOLLOW:
 {structure}
 CAPCUT PRODUCTION BRIEF (the 'capcutScenes' array — VERY IMPORTANT):
-Break the script into 8-14 short scenes. Each scene is a row the editor executes in CapCut. For EACH scene output:
+Break the script into 6-8 short scenes (keep it concise so the JSON stays valid and complete).
 - "scene": number in order.
 - "seconds": rough timing window (e.g. "0-3s"). Scenes should be SHORT (2-4s each) so visuals change fast and break the 2-second scroll.
 - "role": HOOK / BODY / TURN / CTA.
@@ -385,24 +385,8 @@ Return ONLY valid JSON (no markdown fence, no preamble):
   "script": "FULL WORD-FOR-WORD SCRIPT HERE — every word counts",
   "abHookVariant": "Alternative opening sentence for A/B testing",
   "capcutScenes": [
-    {{
-      "scene": 1,
-      "seconds": "0-3s",
-      "role": "HOOK",
-      "spoken": "The eloquent, calm spoken narration line for this scene, written as fluid natural sentences with commas, periods, and ellipses for natural TTS pauses.",
-      "onScreenText": "1-3 WORD PUNCH",
-      "footageKeywords": ["minimalist dark desk", "cinematic slow push shadow", "navy gold calm"],
-      "editNote": "This is the scroll-stopper. Boldest text, strongest visual, fastest cut."
-    }},
-    {{
-      "scene": 2,
-      "seconds": "3-8s",
-      "role": "BODY",
-      "spoken": "Next spoken narration line, calm and natural.",
-      "onScreenText": "PUNCHY PHRASE",
-      "footageKeywords": ["search term 1", "search term 2", "search term 3"],
-      "editNote": "Optional editing/emphasis note."
-    }}
+    {{"scene": 1, "seconds": "0-3s", "role": "HOOK", "spoken": "Calm natural narration for this scene.", "onScreenText": "PUNCH", "footageKeywords": "dark minimal desk, slow push shadow, gold light", "editNote": "scroll-stopper"}},
+    {{"scene": 2, "seconds": "3-7s", "role": "BODY", "spoken": "Next line.", "onScreenText": "PHRASE", "footageKeywords": "term one, term two, term three", "editNote": "note"}}
   ],
   "broll": [
     {{"timestamp":"0-3s","footage":"free stock search term for Pexels/Pixabay","overlay":"TEXT OVERLAY","transition":"cut"}},
@@ -1020,8 +1004,10 @@ def page_approval():
                         )
                         st.markdown(f"🗣️ **Spoken:** {scn.get('spoken','')}")
                         st.markdown(f"💥 **On-screen:** `{scn.get('onScreenText','')}`")
-                        kws = scn.get("footageKeywords", [])
-                        st.markdown(f"🎞️ **Footage:** {', '.join(kws) if kws else '—'}")
+                        kws = scn.get("footageKeywords", "")
+                        if isinstance(kws, list):
+                            kws = ", ".join(kws)
+                        st.markdown(f"🎞️ **Footage:** {kws if kws else '—'}")
                         if scn.get("editNote"):
                             st.caption(f"✂️ {scn['editNote']}")
                         st.markdown("")
@@ -1034,7 +1020,9 @@ def page_approval():
                         full_brief += f"\n[Scene {s.get('scene','')} | {s.get('seconds','')} | {s.get('role','')}]\n"
                         full_brief += f"Spoken: {s.get('spoken','')}\n"
                         full_brief += f"On-screen text: {s.get('onScreenText','')}\n"
-                        full_brief += f"Footage search: {', '.join(s.get('footageKeywords',[]))}\n"
+                        fk = s.get('footageKeywords','')
+                        if isinstance(fk, list): fk = ', '.join(fk)
+                        full_brief += f"Footage search: {fk}\n"
                         if s.get("editNote"):
                             full_brief += f"Note: {s['editNote']}\n"
                     with st.expander("📋 Copy full brief (for CapCut)"):
