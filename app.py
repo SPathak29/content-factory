@@ -413,6 +413,8 @@ Return ONLY valid JSON (no markdown fence, no preamble):
             scripts.append(pkg)
         else:
             add_log("scriptWriter", f"  Script {i+1}: JSON parse failed — skipping")
+            add_log("scriptWriter", f"  RAW (first 1500): {raw[:1500]}")
+            add_log("scriptWriter", f"  RAW (last 500): {raw[-500:]}")
 
         time.sleep(0.3)
 
