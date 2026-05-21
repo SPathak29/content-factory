@@ -345,12 +345,12 @@ PLATFORM: {platform}
 STRUCTURE TO FOLLOW:
 {structure}
 IMAGE PROMPTS (for AI-generated visuals — VERY IMPORTANT):
-Produce 18 to 22 'imagePrompts' — one rich image-generation prompt for roughly every 2-3 seconds of narration, in script order, each visually matching what's being said at that exact moment. Many short, fast-changing visuals (NOT a few long ones) — the rapid visual change is what holds attention.
+Produce 12 to 15 'imagePrompts' — one SHORT prompt of 8-15 words each (NOT long descriptions) for roughly every 3-4 seconds of narration, in script order, matching what's said at that moment. Keep each prompt brief so they all fit. Many fast-changing visuals hold attention.
 - Each describes ONE concrete, literal scene (a person, object, place, or action a stranger instantly recognizes) illustrating that part of the narration.
-- Aesthetic for ALL prompts: calm, premium, cinematic. Deep navy tones (#1a2332) with warm gold (#c9a961) accent lighting. Considered, NOT flashy or hype. Vertical 9:16. Photographic and realistic, high quality.
+- Aesthetic (apply to all, no need to repeat in each prompt): calm cinematic, navy (#1a2332) + gold (#c9a961), vertical 9:16, photographic. Keep each individual prompt SHORT — just name the concrete scene.
 - NO text, words, letters, logos, or watermarks in any image (captions are added separately).
 - Be specific and visual: "a person at a desk at dawn, soft gold light through a window, laptop glowing, calm and focused" — NOT vague like "success" or "money".
-- Aim for 18-22 prompts. Each covers only ~2-3 seconds, so break the script into many small visual moments. Consecutive prompts can show the same scene from different angles or progress an action, to keep it coherent while still changing rapidly.
+- Aim for 12-15 prompts. Each covers ~3-4 seconds, so break the script into many small visual moments. Consecutive prompts can show the same scene from different angles or progress an action, to stay coherent while changing often.
 CRITICAL SCRIPT RULES:
 1. Zero copyrighted phrases. Zero "as I always say", "Let's dive in", "Without further ado", "In today's video"
 2. ElevenLabs-optimised: perfect punctuation, NO em-dashes (use commas), NO stage directions like [pause]
