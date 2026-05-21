@@ -342,14 +342,16 @@ PLATFORM: {platform}
 
 STRUCTURE TO FOLLOW:
 {structure}
-IMAGE PROMPTS (for AI-generated visuals — VERY IMPORTANT):
-Produce 12 to 15 'imagePrompts' — one SHORT prompt of 8-15 words each (NOT long descriptions) for roughly every 3-4 seconds of narration, in script order, matching what's said at that moment. Keep each prompt brief so they all fit. Many fast-changing visuals hold attention.
-- Each describes ONE concrete, literal scene (a person, object, place, or action a stranger instantly recognizes) illustrating that part of the narration.
-- Aesthetic (apply to all, no need to repeat in each prompt): calm cinematic, navy (#1a2332) + gold (#c9a961), vertical 9:16, photographic. Keep each individual prompt SHORT — just name the concrete scene.
-- ABSOLUTELY FORBIDDEN: never describe screens, interfaces, monitors, phones, laptops-with-visible-screens, charts, websites, dashboards, search bars, or analytics graphs. AI image models CANNOT render text and produce glitched gibberish. Zero exceptions.
-- INSTEAD use cinematic, atmospheric, human-centric visual METAPHORS in navy/gold: e.g. "hands on a dark premium keyboard under a single warm desk lamp", "a golden compass turning slowly on dark marble", "steam rising from coffee in a dim gold-lit room", "a person silhouetted at a window at dawn", "warm light spreading across an empty desk". Concrete and filmable, but NO text or screens.
-- Be specific and visual: "a person silhouetted at a window at dawn, warm gold light, calm and still" — NOT vague like "success" or "money", and NOT a screen/laptop/phone.
-- Aim for 12-15 prompts. Each covers ~3-4 seconds, so break the script into many small visual moments. Consecutive prompts can show the same scene from different angles or progress an action, to stay coherent while changing often.
+CAPCUT PRODUCTION BRIEF (the 'capcutScenes' array — VERY IMPORTANT):
+Break the script into 8-14 short scenes. Each scene is a row the editor executes in CapCut. For EACH scene output:
+- "scene": number in order.
+- "seconds": rough timing window (e.g. "0-3s"). Scenes should be SHORT (2-4s each) so visuals change fast and break the 2-second scroll.
+- "role": HOOK / BODY / TURN / CTA.
+- "spoken": the calm, eloquent narration for this scene, written as fluid natural sentences with proper punctuation (commas, periods, ellipses) so CapCut's text-to-speech applies natural breathing and conversational cadence. NO em-dashes (use commas or ellipses). This is what the viewer HEARS.
+- "onScreenText": a HIGHLY COMPRESSED 1-3 word kinetic-typography phrase that flashes on screen for this scene. NOT the same as spoken. Hard-hitting, punchy, designed to stop a scroll. ALL CAPS or title case. This is what the viewer READS.
+- "footageKeywords": 3-4 precise stock-footage search keywords matching the calm, anti-hype navy/gold brand (e.g. "minimalist dark desk laptop", "cinematic slow push shot shadow", "warm gold morning light window", "hands typing close up dim room"). Real-footage search terms, NOT AI-image prompts. NEVER keywords that need on-screen text/UI/charts.
+- "editNote": one short editing tip (cut speed, emphasis, where to land the hook).
+RULES: Hook scene gets the boldest onScreenText + strongest visual. spoken lines across all scenes should read as ONE flowing 75-90 word narration when combined. onScreenText across scenes should read as a punchy highlight reel. Keep the whole thing calm, clear, anti-hype.
 CRITICAL SCRIPT RULES:
 1. Zero copyrighted phrases. Zero "as I always say", "Let's dive in", "Without further ado", "In today's video"
 2. ElevenLabs-optimised: perfect punctuation, NO em-dashes (use commas), NO stage directions like [pause]
@@ -384,10 +386,25 @@ Return ONLY valid JSON (no markdown fence, no preamble):
   "affiliateCommission": "{sel.get('affiliateCommission','')}",
   "script": "FULL WORD-FOR-WORD SCRIPT HERE — every word counts",
   "abHookVariant": "Alternative opening sentence for A/B testing",
-  "imagePrompts": [
-    "HOOK visual — concrete scene matching the opening words, navy (#1a2332) and gold (#c9a961) cinematic, vertical 9:16, photographic, no text",
-    "beat 2 — concrete scene matching the next moment, same aesthetic, vertical, no text",
-    "beat 3 — concrete scene matching the next moment, same aesthetic, vertical, no text"
+  "capcutScenes": [
+    {
+      "scene": 1,
+      "seconds": "0-3s",
+      "role": "HOOK",
+      "spoken": "The eloquent, calm spoken narration line for this scene, written as fluid natural sentences with commas, periods, and ellipses for natural TTS pauses.",
+      "onScreenText": "1-3 WORD PUNCH",
+      "footageKeywords": ["minimalist dark desk", "cinematic slow push shadow", "navy gold calm"],
+      "editNote": "This is the scroll-stopper. Boldest text, strongest visual, fastest cut."
+    },
+    {
+      "scene": 2,
+      "seconds": "3-8s",
+      "role": "BODY",
+      "spoken": "Next spoken narration line, calm and natural.",
+      "onScreenText": "PUNCHY PHRASE",
+      "footageKeywords": ["search term 1", "search term 2", "search term 3"],
+      "editNote": "Optional editing/emphasis note."
+    }
   ],
   "broll": [
     {{"timestamp":"0-3s","footage":"free stock search term for Pexels/Pixabay","overlay":"TEXT OVERLAY","transition":"cut"}},
