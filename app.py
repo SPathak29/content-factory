@@ -385,7 +385,7 @@ Return ONLY valid JSON (no markdown fence, no preamble):
   "script": "FULL WORD-FOR-WORD SCRIPT HERE — every word counts",
   "abHookVariant": "Alternative opening sentence for A/B testing",
   "capcutScenes": [
-    {
+    {{
       "scene": 1,
       "seconds": "0-3s",
       "role": "HOOK",
@@ -393,8 +393,8 @@ Return ONLY valid JSON (no markdown fence, no preamble):
       "onScreenText": "1-3 WORD PUNCH",
       "footageKeywords": ["minimalist dark desk", "cinematic slow push shadow", "navy gold calm"],
       "editNote": "This is the scroll-stopper. Boldest text, strongest visual, fastest cut."
-    },
-    {
+    }},
+    {{
       "scene": 2,
       "seconds": "3-8s",
       "role": "BODY",
@@ -402,7 +402,7 @@ Return ONLY valid JSON (no markdown fence, no preamble):
       "onScreenText": "PUNCHY PHRASE",
       "footageKeywords": ["search term 1", "search term 2", "search term 3"],
       "editNote": "Optional editing/emphasis note."
-    }
+    }}
   ],
   "broll": [
     {{"timestamp":"0-3s","footage":"free stock search term for Pexels/Pixabay","overlay":"TEXT OVERLAY","transition":"cut"}},
